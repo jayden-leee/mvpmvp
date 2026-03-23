@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Researcher Agent — opener ultra</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #f5f4f0;
+  --surface:     #ffffff;
+  --surface2:    #f0efe9;
+  --border:      rgba(0,0,0,0.07);
+  --border2:     rgba(0,0,0,0.12);
+  --text:        #1a1a18;
+  --text2:       #6b6960;
+  --text3:       #b0ae a5;
+  --accent:      #1a5fff;
+  --accent-bg:   #edf2ff;
+  --amber:       #d97706;
+  --amber-bg:    #fffbeb;
+  --red:         #dc2626;
+  --red-bg:      #fef2f2;
+  --green:       #059669;
+  --green-bg:    #ecfdf5;
+  --teal:        #0891b2;
+  --teal-bg:     #ecfeff;
+  --violet:      #7c3aed;
+  --violet-bg:   #f5f3ff;
+  --radius:      18px;
+  --radius-sm:   10px;
+  --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  --card-shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+  --font-serif: 'DM Serif Display', Georgia, serif;
+  --font-body:  'DM Sans', -apple-system, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 36px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--card-shadow);
+}
+.logo {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.logo em { font-style: italic; color: var(--accent); }
+.nav-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  padding: 4px 12px;
+  border-radius: 100px;
+  letter-spacing: 0.3px;
+}
+
+/* ── Hero / Input section ── */
+.hero {
+  max-width: 780px;
+  margin: 52px auto 40px;
+  padding: 0 24px;
+  text-align: center;
+}
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: 42px;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.hero-title em { font-style: italic; color: var(--accent); }
+.hero-sub {
+  font-size: 15px;
+  color: var(--text2);
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0 auto 36px;
+}
+
+/* Search form */
+.search-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow-lg);
+  padding: 28px 32px;
+  text-align: left;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+input[type="text"], input[type="password"], textarea {
+  height: 44px;
+  padding: 0 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(26,95,255,0.1);
+  background: var(--surface);
+}
+input::placeholder { color: #b0aea5; }
+.api-input { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+
+.features-input {
+  height: 80px;
+  padding: 12px 14px;
+  resize: none;
+  line-height: 1.55;
+}
+
+.btn-search {
+  width: 100%;
+  height: 48px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: -0.2px;
+}
+.btn-search:hover { background: #1449d6; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,95,255,0.3); }
+.btn-search:active { transform: translateY(0); }
+.btn-search:disabled { background: #c5c3be; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Progress ── */
+.progress-section {
+  max-width: 780px;
+  margin: 0 auto 32px;
+  padding: 0 24px;
+  display: none;
+}
+.progress-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  padding: 24px 28px;
+}
+.progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.progress-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.progress-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.progress-track {
+  height: 5px;
+  background: var(--surface2);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 100px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+}
+.progress-log {
+  font-size: 12px;
+  color: var(--text2);
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.spin {
+  width: 12px; height: 12px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Results ── */
+.results-section {
+  max-width: 1080px;
+  margin: 0 auto 60px;
+  padding: 0 24px;
+  display: none;
+}
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Section headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.section-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--surface2);
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+}
+
+/* ── Summary card ── */
+.summary-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  padding: 28px 32px;
+  margin-bottom: 20px;
+}
+.summary-company {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.summary-meta {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 20px;
+}
+.summary-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-line;
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+}
+.stat-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.stat-item {
+  text-align: center;
+  flex: 1;
+}
+.stat-num {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: var(--accent);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
+/* ── Pain signals ── */
+.signals-list { display: flex; flex-direction: column; gap: 12px; }
+.signal-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  padding: 20px 22px;
+  animation: fadeUp 0.35s ease both;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.signal-card:hover {
+  box-shadow: var(--card-shadow-lg);
+  transform: translateY(-2px);
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.signal-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.signal-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cat-growth      { background: var(--green-bg);  color: var(--green);  }
+.cat-crisis      { background: var(--red-bg);    color: var(--red);    }
+.cat-strategy    { background: var(--violet-bg); color: var(--violet); }
+.cat-hiring      { background: var(--teal-bg);   color: var(--teal);   }
+.cat-tech        { background: var(--accent-bg); color: var(--accent); }
+.cat-financial   { background: var(--amber-bg);  color: var(--amber);  }
+.cat-partnership { background: var(--green-bg);  color: var(--green);  }
+.cat-leadership  { background: var(--violet-bg); color: var(--violet); }
+.cat-default     { background: var(--surface2);  color: var(--text2);  }
+
+.signal-headline {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.45;
+  flex: 1;
+}
+.signal-detail {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+.signal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.urgency-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.urgency-label { font-size: 10px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.3px; }
+.urgency-track {
+  flex: 1;
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 100px;
+  overflow: hidden;
+  max-width: 100px;
+}
+.urgency-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: var(--accent);
+}
+.signal-source {
+  font-size: 10px;
+  color: var(--text3);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+.signal-source:hover { color: var(--accent); }
+
+/* ── Bridges (side panel) ── */
+.bridges-panel { position: sticky; top: 74px; }
+.bridge-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  margin-bottom: 14px;
+  animation: fadeUp 0.4s ease both;
+}
+.bridge-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.bridge-rank {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.bridge-opening {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+}
+.bridge-body { padding: 14px 18px; }
+.bridge-field {
+  margin-bottom: 12px;
+}
+.bridge-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.bridge-field-value {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.relevance-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  background: var(--green-bg);
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+.copy-btn {
+  width: 100%;
+  height: 36px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 8px;
+}
+.copy-btn:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+.copy-btn.copied { background: var(--green-bg); color: var(--green); }
+
+/* ── Error ── */
+.error-banner {
+  background: var(--red-bg);
+  border: 1px solid rgba(220,38,38,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--red);
+  margin-bottom: 16px;
+  display: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 820px) {
+  .results-grid { grid-template-columns: 1fr; }
+  .bridges-panel { position: static; }
+  .form-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">opener<em>ultra</em></div>
+  <span class="nav-tag">RESEARCHER · STAGE 3</span>
+</header>
+
+<main>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">Tavily Deep Search · Signal Cascade</div>
+    <h1 class="hero-title">바이어를<br><em>이 잡듯</em> 뒤집습니다</h1>
+    <p class="hero-sub">최근 6개월 뉴스·보도자료·IR을 자동 스캔해 페인 신호를 추출하고,<br>우리 제품과의 연결고리를 즉시 생성합니다.</p>
+
+    <div class="search-card">
+      <div id="error-banner" class="error-banner"></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>타겟 기업명</label>
+          <input type="text" id="company-name" placeholder="예: 카카오, Samsung, Toss" />
+        </div>
+        <div class="form-group">
+          <label>도메인 (선택)</label>
+          <input type="text" id="company-domain" placeholder="예: kakao.com" />
+        </div>
+        <div class="form-group">
+          <label>제품명</label>
+          <input type="text" id="product-name" placeholder="예: OpenerUltra" />
+        </div>
+        <div class="form-group">
+          <label>Tavily API Key</label>
+          <input type="password" id="tavily-key" class="api-input" placeholder="tvly-xxxxxxxxxxxxxxxx" />
+        </div>
+        <div class="form-group full">
+          <label>핵심 기능 (쉼표 구분)</label>
+          <textarea id="product-features" class="features-input" placeholder="예: AI 딥 리서치, 자동 개인화 이메일, 세일즈 인텔리전스, 연결고리 생성"></textarea>
+        </div>
+      </div>
+      <button class="btn-search" id="search-btn" onclick="startResearch()">
+        <span>🔍</span> 딥 리서치 시작
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section" id="progress-section">
+    <div class="progress-card">
+      <div class="progress-header">
+        <span class="progress-title" id="progress-company">리서치 중…</span>
+        <span class="progress-pct" id="progress-pct-label">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-log">
+        <div class="spin" id="progress-spin"></div>
+        <span id="progress-msg">초기화 중…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="results-section">
+    <div class="summary-card" id="summary-card"></div>
+    <div class="results-grid">
+      <div>
+        <div class="section-header">
+          <span class="section-title">페인 & 기회 신호</span>
+          <span class="section-count" id="signal-count">0개</span>
+        </div>
+        <div class="signals-list" id="signals-list"></div>
+      </div>
+      <div class="bridges-panel">
+        <div class="section-header">
+          <span class="section-title">연결고리 (세일즈 훅)</span>
+          <span class="section-count" id="bridge-count">0개</span>
+        </div>
+        <div id="bridges-list"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   Signal patterns (JS port of SignalExtractor)
+═══════════════════════════════════════════════════ */
+const SIGNAL_PATTERNS = {
+  growth:      /투자|시리즈[ABC]|펀딩|상장|IPO|확장|신규 사업|series [abc]|funding|ipo|expansion|launch|raised/gi,
+  crisis:      /소송|제재|규제|적자|손실|구조조정|감원|위기|리콜|lawsuit|sanction|regulation|loss|layoff|crisis/gi,
+  strategy:    /전략 변경|피벗|재편|디지털 전환|DX|AI 도입|pivot|digital transformation|restructure|new strategy/gi,
+  hiring:      /채용|구인|대규모 고용|인재 확보|hiring|headcount|talent acquisition|recruit/gi,
+  tech:        /AI|머신러닝|자동화|SaaS|플랫폼 도입|IT 투자|machine learning|automation|platform|cloud/gi,
+  financial:   /실적|매출|영업이익|흑자|적자|어닝|revenue|earnings|profit|loss|quarterly/gi,
+  partnership: /파트너십|제휴|MOU|인수|합병|협력|partnership|acquisition|merger|collaboration/gi,
+  leadership:  /CEO|CTO|CFO|신임|교체|새 경영진|new CEO|executive|leadership change|appointment/gi,
+};
+
+const CAT_LABEL = {
+  growth: '성장/투자', crisis: '위기/리스크', strategy: '전략 전환',
+  hiring: '채용 확대', tech: '기술 도입', financial: '재무',
+  partnership: '파트너십', leadership: '경영진 변화',
+};
+const CAT_CLASS = {
+  growth: 'cat-growth', crisis: 'cat-crisis', strategy: 'cat-strategy',
+  hiring: 'cat-hiring', tech: 'cat-tech', financial: 'cat-financial',
+  partnership: 'cat-partnership', leadership: 'cat-leadership',
+};
+const URGENCY = {
+  crisis: 0.88, strategy: 0.75, leadership: 0.72, hiring: 0.65,
+  growth: 0.60, tech: 0.55, partnership: 0.52, financial: 0.50,
+};
+
+function extractSignals(results, company) {
+  const seen = new Set();
+  const signals = [];
+  for (const r of results) {
+    const text = `${r.title} ${r.content}`;
+    for (const [cat, re] of Object.entries(SIGNAL_PATTERNS)) {
+      const hits = [...new Set((text.match(re)||[]).map(s=>s.toLowerCase()))];
+      if (!hits.length) continue;
+      const key = r.title.slice(0,40).toLowerCase();
+      if (seen.has(key+cat)) continue;
+      seen.add(key+cat);
+      signals.push({
+        category: cat,
+        headline: r.title.slice(0, 110),
+        detail:   r.content.slice(0, 260).trim(),
+        source:   r.url,
+        published: r.published || '',
+        urgency:  Math.min((URGENCY[cat]||0.5) + (r.score||0)*0.15, 0.98),
+        confidence: Math.min(0.45 + hits.length*0.12 + (r.score||0)*0.25, 0.97),
+        hits,
+      });
+    }
+  }
+  return signals.sort((a,b) => b.urgency - a.urgency).slice(0, 12);
+}
+
+/* Bridge factory */
+const BRIDGE_TPLS = {
+  growth:      { hook:"신규 투자 유치 이후 영업 효율을 2배 높인 사례를 공유드릴 수 있습니다.", situation:"빠른 성장 국면에서 세일즈 파이프라인 확장 압박이 있을 시점입니다." },
+  crisis:      { hook:"유사한 위기 상황에서 운영 비용을 30% 절감한 고객 사례가 있습니다.", situation:"리스크 대응과 운영 효율화가 최우선 과제일 것입니다." },
+  strategy:    { hook:"전환 초기 6개월이 골든타임—빠르게 움직인 팀이 시장을 선점합니다.", situation:"새로운 파트너십과 솔루션 도입에 열려 있을 시점입니다." },
+  hiring:      { hook:"인력 2배 확장 시 세일즈 생산성을 유지하는 방법이 있습니다.", situation:"팀 규모 확장에 따른 온보딩·생산성 문제가 생길 수 있는 신호입니다." },
+  tech:        { hook:"이미 검토 중인 기술 스택과 자연스럽게 통합되는 방법이 있습니다.", situation:"신규 기술 솔루션 도입을 적극 검토 중인 시점입니다." },
+  financial:   { hook:"투자 대비 ROI를 90일 안에 증명해 드릴 수 있습니다.", situation:"효율화 압박 혹은 성장 투자 여력이 생긴 상황으로 분석됩니다." },
+  partnership: { hook:"파트너십 직후가 신규 솔루션 논의의 최적 타이밍입니다.", situation:"새로운 사업 영역에서 솔루션 수요가 생겼을 가능성이 높습니다." },
+  leadership:  { hook:"새 리더 취임 후 90일은 새 파트너를 찾는 황금 기회입니다.", situation:"기존 벤더 검토 및 신규 솔루션 도입 논의가 활발해질 시점입니다." },
+};
+
+function buildBridges(signals, company, product, features) {
+  return signals.slice(0, 5).map((sig, i) => {
+    const tpl = BRIDGE_TPLS[sig.category] || BRIDGE_TPLS.growth;
+    const summary = sig.headline.slice(0, 55);
+    const feat = features.slice(0,2).join(', ') || '핵심 기능';
+    return {
+      rank: i+1,
+      opening: `${company}의 최근 "${summary}" 소식을 보고 연락드립니다—${product}가 이 상황에서 어떻게 기여할 수 있는지 10분 이야기 나눌 수 있을까요?`,
+      situation: `${company}이(가) ${tpl.situation}`,
+      hook: tpl.hook,
+      talkTrack: `${company}의 최근 변화를 보고 ${product}의 ${feat}이(가) 직접적인 도움이 될 수 있다고 판단했습니다. ${tpl.hook}`,
+      relevance: Math.round((sig.urgency*0.5 + sig.confidence*0.5) * 100),
+      category: sig.category,
+    };
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   Main research runner — calls Claude API with web_search
+═══════════════════════════════════════════════════ */
+async function runResearch(company, domain, product, features, tavilyKey, onProgress) {
+  // Build search queries
+  const queries = [
+    `${company} 최근 투자 유치 신규 사업 2024 2025`,
+    `${company} 위기 규제 소송 손실 2024 2025`,
+    `${company} 전략 디지털 전환 AI 도입 계획`,
+    `${company} CEO CTO 경영진 변화 채용`,
+    `${company} 파트너십 MOU 인수 합병 2025`,
+    `${company} site:${domain||'news'} latest news`,
+  ];
+
+  let allResults = [];
+  const total = queries.length;
+
+  for (let i = 0; i < queries.length; i++) {
+    onProgress((i / total) * 0.65 + 0.05, `검색 중 (${i+1}/${total}): ${queries[i].slice(0,45)}…`);
+
+    try {
+      const resp = await fetch('https://api.tavily.com/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: tavilyKey,
+          query: queries[i],
+          max_results: 6,
+          search_depth: 'basic',
+          topic: (i <= 1) ? 'news' : 'general',
+          days: (i <= 1) ? 180 : undefined,
+          include_answer: false,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(()=>({error:'Unknown error'}));
+        if (resp.status === 401) throw new Error('Tavily API 키가 올바르지 않습니다. tvly-로 시작하는 키를 확인해 주세요.');
+        if (resp.status === 429) throw new Error('Tavily API 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.');
+        throw new Error(`Tavily 오류: ${err.message || err.error || resp.status}`);
+      }
+
+      const data = await resp.json();
+      const parsed = (data.results || []).map(r => ({
+        title:     r.title || '',
+        url:       r.url   || '',
+        content:   (r.content || '').slice(0, 700),
+        score:     r.score || 0,
+        published: r.published_date || null,
+      }));
+      allResults.push(...parsed);
+
+    } catch(e) {
+      if (e.message.includes('Tavily')) throw e;
+      // network error — continue
+    }
+
+    await sleep(150); // rate limit buffer
+  }
+
+  onProgress(0.72, `총 ${allResults.length}개 결과 수집 완료, 신호 분석 중…`);
+  await sleep(300);
+
+  // Deduplicate
+  const seen = new Set();
+  allResults = allResults.filter(r => {
+    if (seen.has(r.url)) return false;
+    seen.add(r.url);
+    return true;
+  });
+
+  onProgress(0.85, '페인 신호 추출 중…');
+  await sleep(200);
+  const signals = extractSignals(allResults, company);
+
+  onProgress(0.93, '연결고리(Connection Bridge) 생성 중…');
+  await sleep(200);
+  const bridges = buildBridges(signals, company, product, features);
+
+  onProgress(1.0, '완료!');
+  return { signals, bridges, rawCount: allResults.length };
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ═══════════════════════════════════════════════════
+   UI
+═══════════════════════════════════════════════════ */
+async function startResearch() {
+  const company  = document.getElementById('company-name').value.trim();
+  const domain   = document.getElementById('company-domain').value.trim();
+  const product  = document.getElementById('product-name').value.trim() || 'OpenerUltra';
+  const tavilyKey= document.getElementById('tavily-key').value.trim();
+  const featuresRaw = document.getElementById('product-features').value;
+  const features = featuresRaw.split(',').map(s=>s.trim()).filter(Boolean);
+
+  const errEl = document.getElementById('error-banner');
+  errEl.style.display = 'none';
+
+  if (!company) { showError('타겟 기업명을 입력해 주세요.'); return; }
+  if (!tavilyKey || !tavilyKey.startsWith('tvly-')) {
+    showError('유효한 Tavily API 키를 입력해 주세요 (tvly-로 시작). https://tavily.com 에서 무료 발급 가능합니다.');
+    return;
+  }
+
+  // show progress
+  document.getElementById('search-btn').disabled = true;
+  document.getElementById('progress-section').style.display = 'block';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('progress-company').textContent = `"${company}" 딥 리서치 중…`;
+  window.scrollTo({ top: document.getElementById('progress-section').offsetTop - 80, behavior: 'smooth' });
+
+  const onProgress = (pct, msg) => {
+    document.getElementById('progress-fill').style.width = (pct * 100).toFixed(0) + '%';
+    document.getElementById('progress-pct-label').textContent = (pct * 100).toFixed(0) + '%';
+    document.getElementById('progress-msg').textContent = msg;
+  };
+
+  try {
+    const { signals, bridges, rawCount } = await runResearch(
+      company, domain, product, features, tavilyKey, onProgress
+    );
+    document.getElementById('progress-spin').style.display = 'none';
+    renderResults(company, domain, product, signals, bridges, rawCount);
+  } catch(e) {
+    document.getElementById('progress-section').style.display = 'none';
+    showError(e.message || '리서치 중 오류가 발생했습니다.');
+  } finally {
+    document.getElementById('search-btn').disabled = false;
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-banner');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderResults(company, domain, product, signals, bridges, rawCount) {
+  // Summary
+  const topCats = [...new Set(signals.slice(0,3).map(s=>CAT_LABEL[s.category]||s.category))].join(' · ');
+  document.getElementById('summary-card').innerHTML = `
+    <div class="summary-company">${company}</div>
+    <div class="summary-meta">${domain ? domain + ' · ' : ''}리서치 완료 ${new Date().toLocaleDateString('ko-KR')}</div>
+    <div class="summary-body">주요 신호: ${topCats}\n총 ${rawCount}개 원문 수집 → ${signals.length}개 페인 신호 추출 → ${bridges.length}개 연결고리 생성\n\n즉시 활용 가능한 세일즈 오프닝: "${bridges[0]?.opening?.slice(0,80)||'—'}…"</div>
+    <div class="stat-row">
+      <div class="stat-item"><div class="stat-num">${rawCount}</div><div class="stat-label">원문 수집</div></div>
+      <div class="stat-item"><div class="stat-num">${signals.length}</div><div class="stat-label">페인 신호</div></div>
+      <div class="stat-item"><div class="stat-num">${bridges.length}</div><div class="stat-label">연결고리</div></div>
+    </div>
+  `;
+
+  // Signals
+  document.getElementById('signal-count').textContent = signals.length + '개';
+  const sigList = document.getElementById('signals-list');
+  sigList.innerHTML = '';
+  signals.forEach((sig, i) => {
+    const card = document.createElement('div');
+    card.className = 'signal-card';
+    card.style.animationDelay = (i * 0.05) + 's';
+    const urgencyPct = Math.round(sig.urgency * 100);
+    card.innerHTML = `
+      <div class="signal-top">
+        <span class="signal-cat-badge ${CAT_CLASS[sig.category]||'cat-default'}">${CAT_LABEL[sig.category]||sig.category}</span>
+        <div class="signal-headline">${sig.headline}</div>
+      </div>
+      <div class="signal-detail">${sig.detail}</div>
+      <div class="signal-footer">
+        <div class="urgency-bar-wrap">
+          <span class="urgency-label">긴급도</span>
+          <div class="urgency-track"><div class="urgency-fill" style="width:${urgencyPct}%"></div></div>
+          <span style="font-size:11px;font-weight:700;color:var(--text2)">${urgencyPct}%</span>
+        </div>
+        ${sig.source ? `<a class="signal-source" href="${sig.source}" target="_blank" rel="noopener">↗ ${new URL(sig.source).hostname}</a>` : ''}
+      </div>
+    `;
+    sigList.appendChild(card);
+  });
+
+  // Bridges
+  document.getElementById('bridge-count').textContent = bridges.length + '개';
+  const bridgeList = document.getElementById('bridges-list');
+  bridgeList.innerHTML = '';
+  bridges.forEach((b, i) => {
+    const card = document.createElement('div');
+    card.className = 'bridge-card';
+    card.style.animationDelay = (i * 0.08) + 's';
+    card.innerHTML = `
+      <div class="bridge-header">
+        <div class="bridge-rank">연결고리 #${b.rank} · ${CAT_LABEL[b.category]||b.category}</div>
+        <div class="bridge-opening">${b.opening}</div>
+      </div>
+      <div class="bridge-body">
+        <div class="bridge-field">
+          <div class="bridge-field-label">바이어 상황</div>
+          <div class="bridge-field-value">${b.situation}</div>
+        </div>
+        <div class="bridge-field">
+          <div class="bridge-field-label">세일즈 훅</div>
+          <div class="bridge-field-value">${b.hook}</div>
+        </div>
+        <div class="bridge-field">
+          <div class="bridge-field-label">토크트랙</div>
+          <div class="bridge-field-value">${b.talkTrack}</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+          <span class="relevance-pill">연결 강도 ${b.relevance}%</span>
+        </div>
+        <button class="copy-btn" onclick="copyBridge(this, ${JSON.stringify(b.opening).replace(/"/g,'&quot;')})">📋 오프닝 복사</button>
+      </div>
+    `;
+    bridgeList.appendChild(card);
+  });
+
+  // show results
+  document.getElementById('progress-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'block';
+  window.scrollTo({ top: document.getElementById('results-section').offsetTop - 80, behavior: 'smooth' });
+}
+
+function copyBridge(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ 복사됨!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 오프닝 복사'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Enter key on inputs
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.target.id === 'company-name' || e.target.id === 'tavily-key')) {
+    startResearch();
+  }
+});
+</script>
+</body>
+</html>

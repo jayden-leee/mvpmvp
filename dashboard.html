@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opener Ultra MVP — Agent Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f8f9fa;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.06);
+    --text: #191f28;
+    --text2: #6b7684;
+    --text3: #adb5bd;
+    --accent: #3182f6;
+    --accent-bg: #ebf3ff;
+    --success: #00c471;
+    --success-bg: #e8faf2;
+    --warning: #ff8c00;
+    --warning-bg: #fff3e0;
+    --danger: #f04452;
+    --danger-bg: #fff0f1;
+    --idle-bg: #f2f4f6;
+    --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --font: -apple-system, 'Pretendard', 'Apple SD Gothic Neo', BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg2);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Topbar ── */
+  header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.35); opacity: 0.7; }
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-sm {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #1a6fe8; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--bg2); }
+
+  /* ── Layout ── */
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── Summary strip ── */
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+  }
+  .summary-label {
+    font-size: 12px;
+    color: var(--text2);
+    font-weight: 500;
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+  }
+  .summary-value {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+  .summary-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+    letter-spacing: -0.3px;
+  }
+
+  /* ── Agent grid ── */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .agent-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: default;
+  }
+  .agent-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+    transform: translateY(-1px);
+  }
+  .agent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .agent-info { display: flex; align-items: center; gap: 12px; }
+  .agent-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .agent-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .agent-id {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    margin-top: 1px;
+  }
+
+  /* Status badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+  }
+  .badge-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .badge-running  { background: var(--accent-bg);  color: var(--accent);  }
+  .badge-running .badge-dot  { background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+  .badge-completed { background: var(--success-bg); color: #00a35c; }
+  .badge-completed .badge-dot { background: var(--success); }
+  .badge-failed    { background: var(--danger-bg);  color: var(--danger);  }
+  .badge-failed .badge-dot    { background: var(--danger); }
+  .badge-idle      { background: var(--idle-bg);    color: var(--text2);   }
+  .badge-idle .badge-dot      { background: var(--text3); }
+  .badge-paused    { background: var(--warning-bg); color: var(--warning); }
+  .badge-paused .badge-dot    { background: var(--warning); }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin: 12px 0 10px;
+  }
+  .progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .progress-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .progress-pct   { font-size: 12px; color: var(--text);  font-weight: 700; }
+  .progress-track {
+    height: 4px;
+    background: var(--bg2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: var(--accent);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-fill.completed { background: var(--success); }
+  .progress-fill.failed    { background: var(--danger);  }
+
+  /* Meta row */
+  .agent-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .meta-item { font-size: 12px; color: var(--text2); }
+  .meta-item strong { color: var(--text); font-weight: 600; }
+
+  /* ── Event log ── */
+  .log-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .log-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    background: var(--bg2);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .log-list { max-height: 280px; overflow-y: auto; }
+  .log-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-item:hover { background: var(--bg2); }
+  .log-time {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'SF Mono', monospace;
+    white-space: nowrap;
+    min-width: 60px;
+    margin-top: 1px;
+  }
+  .log-type-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .log-body { flex: 1; }
+  .log-event-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .log-detail { font-size: 11px; color: var(--text2); }
+
+  /* ── Controls ── */
+  .controls {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .controls-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-right: 4px;
+  }
+  .btn-run {
+    height: 36px;
+    padding: 0 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+  .btn-run-all { background: var(--accent); color: #fff; }
+  .btn-run-all:hover { background: #1a6fe8; }
+  .btn-run-all:active { transform: scale(0.97); }
+  .btn-reset { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-reset:hover { background: #edf0f4; }
+  .spacer { flex: 1; }
+
+  .empty-log {
+    padding: 32px 22px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text3);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    opener<span style="color:var(--accent)">ultra</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-sm btn-ghost">설정</button>
+    <button class="btn-sm btn-primary" onclick="runAll()">▶ 전체 실행</button>
+  </div>
+</header>
+
+<main>
+  <!-- Summary strip -->
+  <div class="summary-strip" id="summary">
+    <div class="summary-card">
+      <div class="summary-label">전체 에이전트</div>
+      <div class="summary-value" id="sum-total">0</div>
+      <div class="summary-sub">등록된 에이전트</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">실행 중</div>
+      <div class="summary-value" style="color:var(--accent)" id="sum-running">0</div>
+      <div class="summary-sub">현재 작업 중</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">완료</div>
+      <div class="summary-value" style="color:var(--success)" id="sum-done">0</div>
+      <div class="summary-sub">성공적 완료</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">실패</div>
+      <div class="summary-value" style="color:var(--danger)" id="sum-failed">0</div>
+      <div class="summary-sub">오류 발생</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <span class="controls-label">시뮬레이션</span>
+    <button class="btn-run btn-run-all" onclick="runAll()">▶ 파이프라인 실행</button>
+    <button class="btn-run btn-reset" onclick="resetAll()">↺ 초기화</button>
+    <div class="spacer"></div>
+    <span style="font-size:12px;color:var(--text3)">이벤트 기반 아키텍처 · StateManager v1.0</span>
+  </div>
+
+  <!-- Agent cards -->
+  <div class="section-title">에이전트 상태</div>
+  <div class="agent-grid" id="agent-grid"></div>
+
+  <!-- Event log -->
+  <div class="section-title">이벤트 로그</div>
+  <div class="log-card">
+    <div class="log-header">
+      <span class="log-title">실시간 이벤트 스트림</span>
+      <span class="log-count" id="log-count">0 이벤트</span>
+    </div>
+    <div class="log-list" id="log-list">
+      <div class="empty-log">파이프라인을 실행하면 이벤트가 표시됩니다</div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ─── StateManager (JS port of engine/core.py) ─────────────────── */
+const EventType = {
+  AGENT_STARTED:    'agent.started',
+  AGENT_UPDATED:    'agent.updated',
+  AGENT_COMPLETED:  'agent.completed',
+  AGENT_FAILED:     'agent.failed',
+  PIPELINE_STARTED: 'pipeline.started',
+  PIPELINE_DONE:    'pipeline.done',
+};
+
+class EventBus {
+  constructor() { this._listeners = {}; this._history = []; }
+  subscribe(type, fn) {
+    (this._listeners[type] = this._listeners[type] || []).push(fn);
+  }
+  async publish(event) {
+    event.timestamp = Date.now();
+    event.event_id = Math.random().toString(36).slice(2, 6).toUpperCase();
+    this._history.push(event);
+    for (const fn of (this._listeners[event.type] || [])) {
+      await Promise.resolve(fn(event));
+    }
+    renderLog(event);
+  }
+  get history() { return [...this._history]; }
+}
+
+class StateManager {
+  constructor() {
+    this.bus = new EventBus();
+    this._agents = {};
+  }
+  register(id, name, meta = {}) {
+    this._agents[id] = { agent_id: id, name, status: 'idle', progress: 0, result: null, error: null, started_at: null, ended_at: null, meta };
+    return this._agents[id];
+  }
+  async start(id) {
+    const s = this._get(id);
+    s.status = 'running'; s.started_at = Date.now(); s.progress = 0;
+    await this.bus.publish({ type: EventType.AGENT_STARTED, agent_id: id, payload: { ...s } });
+    renderCard(s);
+    updateSummary();
+    return s;
+  }
+  async update(id, progress, meta = {}) {
+    const s = this._get(id);
+    s.progress = Math.max(0, Math.min(1, progress));
+    Object.assign(s.meta, meta);
+    await this.bus.publish({ type: EventType.AGENT_UPDATED, agent_id: id, payload: { ...s } });
+    renderCard(s);
+    return s;
+  }
+  async complete(id, result) {
+    const s = this._get(id);
+    s.status = 'completed'; s.progress = 1; s.result = result; s.ended_at = Date.now();
+    await this.bus.publish({ type: EventType.AGENT_COMPLETED, agent_id: id, payload: { ...s } });
+    renderCard(s);
+    updateSummary();
+    return s;
+  }
+  async fail(id, error) {
+    const s = this._get(id);
+    s.status = 'failed'; s.error = error; s.ended_at = Date.now();
+    await this.bus.publish({ type: EventType.AGENT_FAILED, agent_id: id, payload: { ...s } });
+    renderCard(s);
+    updateSummary();
+    return s;
+  }
+  snapshot() { return Object.fromEntries(Object.entries(this._agents).map(([k,v])=>[k,{...v}])); }
+  _get(id) {
+    if (!this._agents[id]) throw new Error(`Agent '${id}' not registered.`);
+    return this._agents[id];
+  }
+}
+
+/* ─── Agent definitions ─────────────────────────────────────────── */
+const sm = new StateManager();
+
+const AGENTS = [
+  { id: 'data-fetcher',   name: 'DataFetcher',   icon: '🔍', color: '#ebf3ff', steps: 5, failChance: 0   },
+  { id: 'preprocessor',  name: 'Preprocessor',  icon: '⚙️',  color: '#f0eeff', steps: 4, failChance: 0   },
+  { id: 'llm-analyst',   name: 'LLM Analyst',   icon: '🧠', color: '#fff0e0', steps: 6, failChance: 0.15 },
+  { id: 'report-writer', name: 'ReportWriter',  icon: '📝', color: '#e8faf2', steps: 3, failChance: 0   },
+];
+
+AGENTS.forEach(a => sm.register(a.id, a.name, { icon: a.icon }));
+
+/* ─── Rendering ─────────────────────────────────────────────────── */
+const STATUS_LABELS = { idle: '대기', running: '실행 중', completed: '완료', failed: '실패', paused: '일시정지' };
+
+function elapsed(s) {
+  if (!s.started_at) return '—';
+  const ms = (s.ended_at || Date.now()) - s.started_at;
+  return ms < 1000 ? ms + 'ms' : (ms/1000).toFixed(1) + 's';
+}
+
+function renderCard(state) {
+  const a = AGENTS.find(x => x.id === state.agent_id);
+  const pct = Math.round(state.progress * 100);
+  const fillClass = state.status === 'completed' ? 'completed' : state.status === 'failed' ? 'failed' : '';
+
+  const el = document.getElementById('card-' + state.agent_id);
+  const html = `
+    <div class="agent-header">
+      <div class="agent-info">
+        <div class="agent-icon" style="background:${a.color}">${a.icon}</div>
+        <div>
+          <div class="agent-name">${state.name}</div>
+          <div class="agent-id">${state.agent_id}</div>
+        </div>
+      </div>
+      <div class="badge badge-${state.status}">
+        <span class="badge-dot"></span>${STATUS_LABELS[state.status]}
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-row">
+        <span class="progress-label">진행률</span>
+        <span class="progress-pct">${pct}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill ${fillClass}" style="width:${pct}%"></div>
+      </div>
+    </div>
+    <div class="agent-meta">
+      <div class="meta-item">소요 시간 <strong>${elapsed(state)}</strong></div>
+      ${state.error ? `<div class="meta-item" style="color:var(--danger)">오류: ${state.error}</div>` : ''}
+      ${state.result ? `<div class="meta-item">결과 <strong>${JSON.stringify(state.result).slice(0,28)}…</strong></div>` : ''}
+    </div>
+  `;
+  if (el) { el.innerHTML = html; return; }
+
+  const card = document.createElement('div');
+  card.className = 'agent-card';
+  card.id = 'card-' + state.agent_id;
+  card.innerHTML = html;
+  document.getElementById('agent-grid').appendChild(card);
+}
+
+const EVENT_COLORS = {
+  [EventType.AGENT_STARTED]:   '#3182f6',
+  [EventType.AGENT_UPDATED]:   '#adb5bd',
+  [EventType.AGENT_COMPLETED]: '#00c471',
+  [EventType.AGENT_FAILED]:    '#f04452',
+  [EventType.PIPELINE_STARTED]:'#ff8c00',
+  [EventType.PIPELINE_DONE]:   '#00c471',
+};
+const EVENT_NAMES = {
+  [EventType.AGENT_STARTED]:   'agent.started',
+  [EventType.AGENT_UPDATED]:   'agent.updated',
+  [EventType.AGENT_COMPLETED]: 'agent.completed',
+  [EventType.AGENT_FAILED]:    'agent.failed',
+  [EventType.PIPELINE_STARTED]:'pipeline.started',
+  [EventType.PIPELINE_DONE]:   'pipeline.done',
+};
+
+function renderLog(event) {
+  const list = document.getElementById('log-list');
+  const empty = list.querySelector('.empty-log');
+  if (empty) empty.remove();
+
+  const t = new Date(event.timestamp);
+  const time = t.toTimeString().slice(0,8);
+
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.style.animation = 'fadeIn 0.2s ease';
+  item.innerHTML = `
+    <span class="log-time">${time}</span>
+    <span class="log-type-dot" style="background:${EVENT_COLORS[event.type]||'#adb5bd'}"></span>
+    <div class="log-body">
+      <div class="log-event-name">${EVENT_NAMES[event.type] || event.type}</div>
+      <div class="log-detail">${event.agent_id || '시스템'} · ID: ${event.event_id}</div>
+    </div>
+  `;
+  list.insertBefore(item, list.firstChild);
+
+  const cnt = sm.bus.history.length;
+  document.getElementById('log-count').textContent = cnt + ' 이벤트';
+}
+
+function updateSummary() {
+  const snap = sm.snapshot();
+  const vals = Object.values(snap);
+  document.getElementById('sum-total').textContent   = vals.length;
+  document.getElementById('sum-running').textContent = vals.filter(s=>s.status==='running').length;
+  document.getElementById('sum-done').textContent    = vals.filter(s=>s.status==='completed').length;
+  document.getElementById('sum-failed').textContent  = vals.filter(s=>s.status==='failed').length;
+}
+
+/* ─── Simulation ─────────────────────────────────────────────────── */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function simulateAgent(agentDef) {
+  const { id, steps, failChance } = agentDef;
+  await sm.start(id);
+  for (let i = 1; i <= steps; i++) {
+    await sleep(300 + Math.random() * 400);
+    if (Math.random() < failChance) {
+      await sm.fail(id, '처리 중 오류 발생');
+      return;
+    }
+    await sm.update(id, i / steps, { step: i });
+  }
+  await sleep(200);
+  await sm.complete(id, { rows: Math.floor(Math.random() * 500 + 100) });
+}
+
+let running = false;
+
+async function runAll() {
+  if (running) return;
+  running = true;
+  await sm.bus.publish({ type: EventType.PIPELINE_STARTED, payload: {} });
+
+  // Re-register to reset
+  AGENTS.forEach(a => {
+    sm._agents[a.id] = { agent_id: a.id, name: a.name, status: 'idle', progress: 0, result: null, error: null, started_at: null, ended_at: null, meta: { icon: a.icon } };
+    renderCard(sm._agents[a.id]);
+  });
+  updateSummary();
+
+  // Run sequentially (stage 1 & 2 parallel, then 3, then 4)
+  await Promise.all([
+    simulateAgent(AGENTS[0]),
+    simulateAgent(AGENTS[1]),
+  ]);
+  await simulateAgent(AGENTS[2]);
+  await simulateAgent(AGENTS[3]);
+
+  await sm.bus.publish({ type: EventType.PIPELINE_DONE, payload: { total: AGENTS.length } });
+  running = false;
+}
+
+function resetAll() {
+  running = false;
+  document.getElementById('agent-grid').innerHTML = '';
+  document.getElementById('log-list').innerHTML = '<div class="empty-log">파이프라인을 실행하면 이벤트가 표시됩니다</div>';
+  document.getElementById('log-count').textContent = '0 이벤트';
+  sm.bus._history = [];
+  sm.bus._listeners = {};
+
+  AGENTS.forEach(a => {
+    sm.register(a.id, a.name, { icon: a.icon });
+    renderCard(sm._agents[a.id]);
+  });
+  updateSummary();
+}
+
+// Initial render
+AGENTS.forEach(a => renderCard(sm._agents[a.id]));
+updateSummary();
+</script>
+</body>
+</html>

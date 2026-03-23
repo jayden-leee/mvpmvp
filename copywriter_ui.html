@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copywriter — opener ultra</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f7f6f2;
+  --surface:#ffffff;
+  --surface2:#f2f1ec;
+  --surface3:#eae9e3;
+  --border:rgba(0,0,0,0.07);
+  --border2:rgba(0,0,0,0.12);
+  --text:#1a1a16;
+  --text2:#6b6960;
+  --text3:#b0ae a5;
+  --accent:#5b47ff;
+  --accent-bg:#eeeaff;
+  --amber:#d97706;
+  --amber-bg:#fef3c7;
+  --red:#dc2626;
+  --red-bg:#fee2e2;
+  --green:#059669;
+  --green-bg:#d1fae5;
+  --radius:14px;
+  --radius-sm:8px;
+  --shadow:0 4px 12px rgba(0,0,0,0.05);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.09);
+  --font-display:'Bricolage Grotesque',sans-serif;
+  --font-body:'Noto Sans KR',-apple-system,sans-serif;
+}
+
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* ── Header ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:54px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;
+  box-shadow:var(--shadow);
+}
+.logo{font-family:var(--font-display);font-size:17px;font-weight:700;letter-spacing:-0.4px;color:var(--text)}
+.logo em{font-style:italic;color:var(--accent)}
+.stage-tag{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-bg);border:1px solid rgba(91,71,255,0.15);
+  padding:4px 12px;border-radius:100px}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 54px)}
+
+/* ── Config Panel ── */
+.config-panel{
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:28px 24px;overflow-y:auto;
+  position:sticky;top:54px;height:calc(100vh - 54px);
+}
+.panel-section{margin-bottom:24px}
+.panel-section-title{
+  font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;
+  color:var(--text2);margin-bottom:12px;
+  display:flex;align-items:center;gap:6px;
+}
+.panel-section-title::before{content:'';display:inline-block;width:3px;height:12px;
+  background:var(--accent);border-radius:2px}
+
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--text2);
+  letter-spacing:0.3px;text-transform:uppercase;margin-bottom:5px}
+input[type=text],input[type=password],select,textarea{
+  width:100%;padding:9px 12px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;
+  color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,71,255,0.1);
+  background:var(--surface);
+}
+textarea{height:72px;resize:vertical;line-height:1.55}
+input::placeholder,textarea::placeholder{color:#c0bdb4}
+select{cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6960' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center}
+
+.api-input{font-family:'SF Mono','Fira Code',monospace;font-size:12px}
+
+/* Style pills */
+.style-pills{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.style-pill{
+  padding:7px 10px;border-radius:7px;
+  background:var(--surface2);border:1px solid var(--border2);
+  font-size:11px;font-weight:600;color:var(--text2);
+  cursor:pointer;transition:all .15s;text-align:center;
+}
+.style-pill:hover{border-color:var(--accent);color:var(--accent)}
+.style-pill.active{background:var(--accent-bg);border-color:rgba(91,71,255,0.3);color:var(--accent)}
+
+/* Char limit display */
+.char-spec{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 12px;margin-top:4px;
+}
+.char-spec-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.char-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.char-field{font-size:11px;color:var(--text2)}
+.char-val{font-size:11px;font-weight:700;color:var(--accent);font-family:monospace}
+
+/* Generate button */
+.btn-gen{
+  width:100%;height:44px;margin-top:4px;
+  background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);
+  font-family:var(--font-display);font-size:14px;font-weight:700;
+  cursor:pointer;letter-spacing:-0.2px;
+  transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-gen:hover{background:#4a38e8;box-shadow:0 4px 16px rgba(91,71,255,0.35);transform:translateY(-1px)}
+.btn-gen:active{transform:translateY(0)}
+.btn-gen:disabled{background:#c5c3be;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ── Output Panel ── */
+.output-panel{padding:32px 36px;overflow-y:auto}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:65vh;text-align:center;gap:14px}
+.empty-icon{width:68px;height:68px;background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;
+  box-shadow:var(--shadow)}
+.empty-title{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text2)}
+.empty-sub{font-size:13px;color:#b0ae a5;max-width:300px;line-height:1.65}
+
+/* Progress */
+.progress-section{margin-bottom:24px}
+.progress-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:22px 26px;box-shadow:var(--shadow)}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.progress-title{font-size:14px;font-weight:600;color:var(--text)}
+.progress-pct{font-size:13px;font-weight:700;color:var(--accent)}
+.progress-track{height:4px;background:var(--surface2);border-radius:100px;overflow:hidden;margin-bottom:10px}
+.progress-fill{height:100%;background:var(--accent);border-radius:100px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.progress-msg{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px}
+.spin{width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Slide Deck Preview ── */
+.deck-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.deck-title{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text)}
+.violations-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px}
+.vb-ok{background:var(--green-bg);color:var(--green)}
+.vb-warn{background:var(--amber-bg);color:var(--amber)}
+
+/* Slide preview cards */
+.slides-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:28px}
+.slide-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);
+  animation:fadeUp .35s ease both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.slide-mini{
+  height:160px;padding:20px 22px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.slide-bg-cover{background:linear-gradient(135deg,#0A0A12 0%,#1A1530 100%)}
+.slide-bg-pain{background:linear-gradient(135deg,#12111A 0%,#1F0F0F 100%)}
+.slide-bg-solution{background:linear-gradient(135deg,#0D1520 0%,#0D1535 100%)}
+.slide-bg-proof{background:linear-gradient(135deg,#0D1A14 0%,#0A2018 100%)}
+.slide-bg-cta{background:linear-gradient(135deg,#140D1A 0%,#1E0D30 100%)}
+
+.slide-accent-bar{height:2px;width:32px;border-radius:1px;margin-bottom:10px}
+.bar-cover{background:#7B61FF}.bar-pain{background:#F87171}
+.bar-solution{background:#7B61FF}.bar-proof{background:#34D399}.bar-cta{background:#F0B429}
+
+.slide-headline{font-family:var(--font-display);font-size:14px;font-weight:700;
+  color:#E8E6F0;line-height:1.25;margin-bottom:5px}
+.slide-subheadline{font-size:10px;color:#9E9BB5;line-height:1.4}
+.slide-num-badge{
+  position:absolute;top:12px;right:14px;
+  font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+  color:#5A5870;
+}
+
+.slide-card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;border-top:1px solid var(--border);
+  background:var(--surface2);
+}
+.char-counter{
+  display:flex;gap:10px;
+}
+.cc-item{
+  display:flex;align-items:center;gap:4px;
+  font-size:10px;color:var(--text2);
+}
+.cc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cc-ok{background:var(--green)}.cc-warn{background:var(--amber)}.cc-over{background:var(--red)}
+
+/* ── Email Preview ── */
+.email-section{margin-bottom:28px}
+.email-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.email-header{
+  background:linear-gradient(90deg,var(--accent-bg) 0%,var(--surface) 100%);
+  padding:16px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.email-header-label{font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--accent)}
+.email-body-wrap{padding:20px 24px}
+.email-field{margin-bottom:16px}
+.email-field-label{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.5px;color:var(--text2);margin-bottom:5px}
+.email-subject{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);line-height:1.35}
+.email-preview{font-size:12px;color:var(--text2);font-style:italic}
+.email-body-text{font-size:13px;color:var(--text);line-height:1.7;white-space:pre-line}
+.email-cta-line{font-size:13px;font-weight:600;color:var(--accent)}
+.email-ps{font-size:12px;color:var(--text2);font-style:italic;
+  border-left:2px solid var(--accent);padding-left:10px}
+.char-bar{height:2px;margin-top:4px;border-radius:100px;background:var(--border)}
+.char-bar-fill{height:100%;border-radius:100px;transition:width .4s}
+
+/* JSON toggle */
+.json-section{margin-bottom:28px}
+.json-toggle-btn{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:600;color:var(--text2);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:8px 14px;
+  cursor:pointer;transition:all .15s;margin-bottom:10px;
+}
+.json-toggle-btn:hover{background:var(--surface2)}
+.json-output{
+  background:#1a1a24;border-radius:var(--radius);
+  padding:16px 20px;overflow-x:auto;
+  font-family:'SF Mono','Fira Code',monospace;font-size:11px;
+  color:#a8b0c8;line-height:1.65;max-height:340px;overflow-y:auto;
+  display:none;
+}
+.json-output.open{display:block}
+
+/* Copy buttons */
+.copy-btn{
+  font-size:11px;font-weight:600;
+  color:var(--accent);background:var(--accent-bg);
+  border:1px solid rgba(91,71,255,0.15);
+  padding:4px 12px;border-radius:100px;
+  cursor:pointer;font-family:var(--font-body);
+  transition:all .15s;
+}
+.copy-btn:hover{background:rgba(91,71,255,0.15)}
+.copy-btn.copied{background:var(--green-bg);color:var(--green)}
+
+.section-label{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--text2);margin-bottom:12px;display:block}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .config-panel{position:static;height:auto}
+  .slides-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">opener<em>ultra</em></div>
+  <div class="stage-tag">COPYWRITER · STAGE 5</div>
+</header>
+
+<div class="layout">
+
+<!-- ─── Config ─── -->
+<div class="config-panel">
+
+  <div class="panel-section">
+    <div class="panel-section-title">바이어 정보</div>
+    <div class="form-group">
+      <label class="form-label">기업명</label>
+      <input type="text" id="buyer-company" placeholder="Acme Corp" value="Acme Corp" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">담당자 이름</label>
+      <input type="text" id="buyer-name" placeholder="Sarah Kim" value="Sarah Kim" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">직무/직책</label>
+      <input type="text" id="buyer-role" placeholder="VP Sales" value="VP Sales" />
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <div class="panel-section-title">제품 & 전략</div>
+    <div class="form-group">
+      <label class="form-label">제품명</label>
+      <input type="text" id="product-name" placeholder="OpenerUltra" value="OpenerUltra" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">핵심 가치 제안</label>
+      <textarea id="value-prop" placeholder="세일즈 팀이 리서치 없이 바로 미팅을 잡을 수 있도록 AI가 3시간 리서치를 90초로 압축합니다.">세일즈 팀이 리서치 없이 바로 미팅을 잡을 수 있도록 AI가 3시간 리서치를 90초로 압축합니다.</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">개인화 훅 (최근 소식/트리거)</label>
+      <textarea id="pain-signal" placeholder="Acme just raised $30M Series B and is tripling their sales team this quarter">Acme just raised $30M Series B and is tripling their sales team this quarter</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">문화 스타일</label>
+      <div class="style-pills" id="style-pills">
+        <div class="style-pill active" data-style="CONCLUSION_FIRST">결론 중심</div>
+        <div class="style-pill" data-style="TRUST_FIRST">신뢰 중심</div>
+        <div class="style-pill" data-style="VALUE_FIRST">가성비 중심</div>
+        <div class="style-pill" data-style="STORY_FIRST">스토리 중심</div>
+        <div class="style-pill" data-style="DATA_FIRST">데이터 중심</div>
+        <div class="style-pill" data-style="RISK_FIRST">리스크 제거</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <div class="panel-section-title">PDF 글자 수 규격</div>
+    <div class="char-spec">
+      <div class="char-spec-title">슬라이드 타입별 상한</div>
+      <div id="char-spec-content"></div>
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <div class="panel-section-title">Claude API</div>
+    <div class="form-group">
+      <input type="password" id="api-key" class="api-input" placeholder="sk-ant-api03-..." />
+    </div>
+  </div>
+
+  <button class="btn-gen" id="gen-btn" onclick="generate()">
+    ✦ 카피 & PDF 생성
+  </button>
+
+</div>
+
+<!-- ─── Output ─── -->
+<div class="output-panel" id="output-panel">
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">✍️</div>
+    <div class="empty-title">카피라이터 대기 중</div>
+    <div class="empty-sub">바이어 정보와 API 키를 입력하고 생성 버튼을 누르면 5-슬라이드 PDF + 개인화 이메일이 즉시 만들어집니다.</div>
+  </div>
+
+  <div id="progress-section" style="display:none" class="progress-section">
+    <div class="progress-card">
+      <div class="progress-header">
+        <span class="progress-title" id="prog-title">카피 생성 중…</span>
+        <span class="progress-pct" id="prog-pct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="progress-msg"><div class="spin"></div><span id="prog-msg">초기화 중…</span></div>
+    </div>
+  </div>
+
+  <div id="results" style="display:none">
+    <!-- Deck -->
+    <div class="deck-header">
+      <div class="deck-title">5-슬라이드 제안서 덱</div>
+      <span class="violations-badge" id="vio-badge"></span>
+    </div>
+    <div class="slides-grid" id="slides-grid"></div>
+
+    <!-- Email -->
+    <div class="email-section">
+      <span class="section-label">개인화 콜드 이메일</span>
+      <div class="email-card">
+        <div class="email-header">
+          <span class="email-header-label">✉ Personalized Hook Email</span>
+          <button class="copy-btn" id="copy-email-btn" onclick="copyEmail()">📋 전체 복사</button>
+        </div>
+        <div class="email-body-wrap" id="email-body-wrap"></div>
+      </div>
+    </div>
+
+    <!-- JSON -->
+    <div class="json-section">
+      <button class="json-toggle-btn" onclick="toggleJson()">
+        <span>{ }</span> JSON 출력 보기/숨기기
+      </button>
+      <pre class="json-output" id="json-output"></pre>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   Character limits (mirrors copywriter.py)
+═══════════════════════════════════════════════ */
+const CHAR_LIMITS = {
+  cover:    {headline:55, subheadline:90,  body:0,   bullet:0},
+  pain:     {headline:60, subheadline:100, body:220, bullet:80},
+  solution: {headline:60, subheadline:100, body:200, bullet:80},
+  proof:    {headline:60, subheadline:100, body:250, bullet:90},
+  cta:      {headline:55, subheadline:90,  body:160, bullet:70},
+};
+const EMAIL_LIMITS = {subject:65, preview_text:90, body:1800, cta_line:90, ps_line:130};
+const MAX_BULLETS = 3;
+
+const STYLE_VOICE = {
+  CONCLUSION_FIRST:"Direct, confident, lead with the payoff. Numbers first. No hedging.",
+  TRUST_FIRST:"Warm, respectful, relationship-first. Use 'together', 'partnership'.",
+  VALUE_FIRST:"Clarity over cleverness. Show price-to-value immediately.",
+  STORY_FIRST:"Open with a mini-story. Emotion before logic.",
+  DATA_FIRST:"Every claim needs a metric. Precise language. No superlatives.",
+  RISK_FIRST:"Acknowledge risk upfront then eliminate it. 'Proven', 'guaranteed'.",
+};
+
+const SLIDE_ORDER = ['cover','pain','solution','proof','cta'];
+const SLIDE_LABELS = {cover:'표지',pain:'페인포인트',solution:'솔루션',proof:'증거',cta:'CTA'};
+
+/* ─── Char spec UI ─── */
+function renderCharSpec() {
+  const el = document.getElementById('char-spec-content');
+  el.innerHTML = SLIDE_ORDER.map(t => {
+    const lim = CHAR_LIMITS[t];
+    return `
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">${SLIDE_LABELS[t]}</div>
+        ${Object.entries(lim).filter(([k])=>k!=='bullet').map(([k,v])=>`
+          <div class="char-row">
+            <span class="char-field">${k}</span>
+            <span class="char-val">${v===0?'—':v+'c'}</span>
+          </div>`).join('')}
+      </div>
+    `;
+  }).join('');
+}
+renderCharSpec();
+
+/* ─── Style pills ─── */
+let selectedStyle = 'CONCLUSION_FIRST';
+document.getElementById('style-pills').addEventListener('click', e => {
+  const btn = e.target.closest('.style-pill');
+  if (!btn) return;
+  document.querySelectorAll('.style-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedStyle = btn.dataset.style;
+});
+
+/* ─── Trim helper ─── */
+function trim(text, limit) {
+  if (!limit) return "";
+  if (!text) return "";
+  if (text.length > limit) return text.slice(0, limit-1).trimEnd() + "…";
+  return text;
+}
+
+/* ═══════════════════════════════════════════════
+   Slide prompt templates
+═══════════════════════════════════════════════ */
+const SLIDE_PROMPTS = {
+  cover: (ctx) => `Write the COVER slide for a B2B sales proposal.
+Buyer: ${ctx.name} (${ctx.role}) at ${ctx.company}
+Product: ${ctx.product}
+Voice: ${ctx.voice}
+Hook/trigger: ${ctx.hook}
+
+Rules:
+- headline ≤55 chars: Bold transformation promise. NOT "Welcome to ${ctx.product}." Start with a number or power verb.
+- subheadline ≤90 chars: The specific business outcome they will get.
+- body: MUST be empty string ""
+- bullets: MUST be empty array []
+- visual_note: Art direction for designer (3-6 words describing mood/hero image)
+- speaker_note: How to open the meeting with this slide (1 sentence)
+
+Output ONLY valid JSON:
+{"headline":"","subheadline":"","body":"","bullets":[],"visual_note":"","speaker_note":""}`,
+
+  pain: (ctx) => `Write the PAIN slide.
+Buyer: ${ctx.name} (${ctx.role}) at ${ctx.company}
+Voice: ${ctx.voice}
+Hook: ${ctx.hook}
+
+Rules:
+- headline ≤60 chars: Name the problem in buyer's own language. Start with a verb or number.
+- subheadline ≤100 chars: Cost of inaction. What happens if nothing changes.
+- body ≤220 chars: 2 sentences on the pain. Specific to ${ctx.role}'s world.
+- bullets: exactly 3 items, each ≤80 chars. Concrete symptoms. No fluff. Start with verb or number.
+- visual_note: Chart or metaphor concept (5-8 words)
+- speaker_note: A question to ask the buyer after showing this slide (1 sentence)
+
+Output ONLY valid JSON:
+{"headline":"","subheadline":"","body":"","bullets":["","",""],"visual_note":"","speaker_note":""}`,
+
+  solution: (ctx) => `Write the SOLUTION slide.
+Product: ${ctx.product}
+Value prop: ${ctx.valueProp}
+Buyer: ${ctx.role} at ${ctx.company}
+Voice: ${ctx.voice}
+
+Rules:
+- headline ≤60 chars: "${ctx.product} + transformation verb + outcome." Lead with the 'after' state.
+- subheadline ≤100 chars: HOW it works in one crisp line. Mechanism not marketing.
+- body ≤200 chars: Bridge from their pain to this solution. 2 sentences max.
+- bullets: exactly 3 items, each ≤80 chars. Frame as buyer outcomes not features. Start with verb.
+- visual_note: Product screenshot or before/after concept (5-8 words)
+- speaker_note: The one demo moment that closes most deals (1 sentence)
+
+Output ONLY valid JSON:
+{"headline":"","subheadline":"","body":"","bullets":["","",""],"visual_note":"","speaker_note":""}`,
+
+  proof: (ctx) => `Write the PROOF / CASE STUDY slide.
+Product: ${ctx.product}
+Buyer: ${ctx.role} at ${ctx.company}
+Voice: ${ctx.voice}
+
+Rules:
+- headline ≤60 chars: Specific result from a real customer type. Must include a number.
+- subheadline ≤100 chars: Who this customer is and situation before.
+- body ≤250 chars: 3-part story: situation → action → result. One customer example.
+- bullets: exactly 3 items, each ≤90 chars. Measurable outcomes with numbers (%, $, days, hours).
+- visual_note: Customer logo placeholder + pullquote visual concept (5-8 words)
+- speaker_note: How to handle "do you have a reference in our industry?" objection (1 sentence)
+
+Output ONLY valid JSON:
+{"headline":"","subheadline":"","body":"","bullets":["","",""],"visual_note":"","speaker_note":""}`,
+
+  cta: (ctx) => `Write the CTA slide.
+Product: ${ctx.product}
+Buyer: ${ctx.role} at ${ctx.company}
+Voice: ${ctx.voice}
+
+Rules:
+- headline ≤55 chars: Single clear ask. Start with action verb. Low friction.
+- subheadline ≤90 chars: Why NOW — urgency or opportunity cost of waiting.
+- body ≤160 chars: What happens in the next 14 days if they say yes. The fast path.
+- bullets: exactly 3 items, each ≤70 chars. Next-step options from lowest to highest commitment.
+- visual_note: Simple timeline or calendar concept (4-7 words)
+- speaker_note: How to handle "let me think about it" objection (1 sentence)
+
+Output ONLY valid JSON:
+{"headline":"","subheadline":"","body":"","bullets":["","",""],"visual_note":"","speaker_note":""}`,
+};
+
+const EMAIL_PROMPT = (ctx) => `Write a cold outreach email that gets replies.
+
+Buyer: ${ctx.name} (${ctx.role}) at ${ctx.company}
+Recent trigger/hook: ${ctx.hook}
+Product: ${ctx.product}
+Voice style: ${ctx.voice}
+Core pain: ${ctx.valueProp}
+
+Rules:
+- subject ≤65 chars: Pattern: "[Company]'s [problem]" OR "[Competitor] does X—[Company] could too" OR specific question. Creates curiosity.
+- preview_text ≤90 chars: Completes the thought from subject. Must make them open the email.
+- body ≤1800 chars:
+  Para 1 — HOOK (2 sentences): Reference ${ctx.hook}. Unmistakably personal. Do NOT start with "I hope this finds you well."
+  Para 2 — BRIDGE (2-3 sentences): Name exact pain a ${ctx.role} at ${ctx.company} feels. Use their internal language.
+  Para 3 — PROOF (2 sentences): One concrete result from similar company. Include a specific number.
+  Para 4 — ASK (1 sentence): Single frictionless question. NOT "Would you like a demo?" Use "Worth a 15-min call?" style.
+- cta_line ≤90 chars: Calendar link sentence. Extremely low friction.
+- ps_line ≤130 chars: A P.S. with social proof OR urgency OR curiosity gap. P.S. lines get read—make it count.
+
+Output ONLY valid JSON:
+{"subject":"","preview_text":"","body":"","cta_line":"","ps_line":""}`;
+
+/* ═══════════════════════════════════════════════
+   Claude API call
+═══════════════════════════════════════════════ */
+async function callClaude(userPrompt, apiKey, maxTokens=1000) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true',
+    },
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system:`You are an elite B2B sales copywriter. Output ONLY valid JSON. No markdown fences. No explanation. No preamble. Never exceed character limits.`,
+      messages:[{role:'user', content: userPrompt}],
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(()=>({error:{message:'Unknown error'}}));
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  const text = data.content[0].text;
+  // Parse JSON from response
+  const cleaned = text.replace(/```json|```/g,'').trim();
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('No JSON in response: ' + text.slice(0,100));
+  return JSON.parse(match[0]);
+}
+
+/* ═══════════════════════════════════════════════
+   Generate
+═══════════════════════════════════════════════ */
+let currentDoc = null;
+
+async function generate() {
+  const company   = document.getElementById('buyer-company').value.trim();
+  const name      = document.getElementById('buyer-name').value.trim();
+  const role      = document.getElementById('buyer-role').value.trim();
+  const product   = document.getElementById('product-name').value.trim() || 'OpenerUltra';
+  const valueProp = document.getElementById('value-prop').value.trim();
+  const hook      = document.getElementById('pain-signal').value.trim();
+  const apiKey    = document.getElementById('api-key').value.trim();
+
+  if (!company || !name || !role) { alert('바이어 정보를 입력해 주세요.'); return; }
+  if (!apiKey || !apiKey.startsWith('sk-ant')) {
+    alert('유효한 Anthropic API 키를 입력해 주세요 (sk-ant-로 시작).'); return;
+  }
+
+  const ctx = { company, name, role, product, valueProp, hook, voice: STYLE_VOICE[selectedStyle] };
+
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('progress-section').style.display = 'block';
+
+  const prog = (pct, msg) => {
+    document.getElementById('prog-fill').style.width = (pct*100).toFixed(0)+'%';
+    document.getElementById('prog-pct').textContent   = (pct*100).toFixed(0)+'%';
+    document.getElementById('prog-msg').textContent   = msg;
+    document.getElementById('prog-title').textContent = `"${name}" 제안서 생성 중…`;
+  };
+
+  try {
+    const doc = {
+      meta: { doc_id: Math.random().toString(36).slice(2,12), buyer_company:company,
+              buyer_name:name, buyer_role:role, product_name:product,
+              culture_style:selectedStyle, created_at:Date.now() },
+      slides: [],
+      email: null,
+    };
+
+    // Generate 5 slides
+    for (let i=0; i<SLIDE_ORDER.length; i++) {
+      const stype = SLIDE_ORDER[i];
+      prog((i/6)*0.82+0.02, `슬라이드 ${i+1}/5 생성 중: ${SLIDE_LABELS[stype].toUpperCase()}…`);
+      const promptFn = SLIDE_PROMPTS[stype];
+      const raw = await callClaude(promptFn(ctx), apiKey, 800);
+
+      const lim = CHAR_LIMITS[stype];
+      const violations = [];
+      const trimField = (text, limit, fname) => {
+        if (limit===0) { if(text&&text.trim()) violations.push(`${fname}: must be empty`); return ""; }
+        if (!text) return "";
+        if (text.length>limit) { violations.push(`${fname}: ${text.length}>${limit} chars`); return text.slice(0,limit-1)+'…'; }
+        return text;
+      };
+
+      doc.slides.push({
+        slide_num: i+1,
+        type: stype,
+        headline:    trimField(raw.headline||'', lim.headline, 'headline'),
+        subheadline: trimField(raw.subheadline||'', lim.subheadline, 'subheadline'),
+        body:        trimField(raw.body||'', lim.body, 'body'),
+        bullets:     (raw.bullets||[]).slice(0,MAX_BULLETS).map((b,bi)=>trimField(b,lim.bullet,`bullet[${bi}]`)),
+        visual_note: raw.visual_note||'',
+        speaker_note: raw.speaker_note||'',
+        char_count: {
+          headline:    (raw.headline||'').length,
+          subheadline: (raw.subheadline||'').length,
+          body:        (raw.body||'').length,
+        },
+        violations,
+      });
+    }
+
+    // Generate email
+    prog(0.88, '개인화 이메일 생성 중…');
+    const rawEmail = await callClaude(EMAIL_PROMPT(ctx), apiKey, 1400);
+    const emailVios = [];
+    const trimE = (t,l,n)=>{if(t&&t.length>l){emailVios.push(`${n}: ${t.length}>${l}`);return t.slice(0,l-1)+'…';}return t||'';};
+
+    doc.email = {
+      subject:      trimE(rawEmail.subject||'',      EMAIL_LIMITS.subject,      'subject'),
+      preview_text: trimE(rawEmail.preview_text||'', EMAIL_LIMITS.preview_text, 'preview_text'),
+      body:         trimE(rawEmail.body||'',         EMAIL_LIMITS.body,         'body'),
+      cta_line:     trimE(rawEmail.cta_line||'',     EMAIL_LIMITS.cta_line,     'cta_line'),
+      ps_line:      trimE(rawEmail.ps_line||'',      EMAIL_LIMITS.ps_line,      'ps_line'),
+      char_count:   {subject:(rawEmail.subject||'').length, body:(rawEmail.body||'').length},
+      violations:   emailVios,
+    };
+
+    doc.meta.total_violations = doc.slides.reduce((a,s)=>a+s.violations.length,0) + emailVios.length;
+    currentDoc = doc;
+
+    prog(1.0, '완료!');
+    await new Promise(r=>setTimeout(r,400));
+    renderResults(doc);
+
+  } catch(e) {
+    alert('오류: ' + e.message);
+    document.getElementById('progress-section').style.display='none';
+    document.getElementById('empty-state').style.display='flex';
+  } finally {
+    document.getElementById('gen-btn').disabled=false;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Render Results
+═══════════════════════════════════════════════ */
+const SLIDE_BG = {cover:'slide-bg-cover',pain:'slide-bg-pain',solution:'slide-bg-solution',proof:'slide-bg-proof',cta:'slide-bg-cta'};
+const BAR_CLR  = {cover:'bar-cover',pain:'bar-pain',solution:'bar-solution',proof:'bar-proof',cta:'bar-cta'};
+
+function ccClass(count, limit) {
+  if (!limit) return 'cc-ok';
+  const ratio = count/limit;
+  if (ratio > 1) return 'cc-over';
+  if (ratio > 0.85) return 'cc-warn';
+  return 'cc-ok';
+}
+
+function renderResults(doc) {
+  document.getElementById('progress-section').style.display='none';
+  document.getElementById('results').style.display='block';
+
+  const totalVio = doc.meta.total_violations;
+  const badge = document.getElementById('vio-badge');
+  badge.textContent = totalVio === 0 ? '✓ 글자 수 규격 준수' : `⚠ ${totalVio}건 위반 (자동 트런케이션)`;
+  badge.className = 'violations-badge ' + (totalVio===0?'vb-ok':'vb-warn');
+
+  // Slides
+  const grid = document.getElementById('slides-grid');
+  grid.innerHTML = '';
+  doc.slides.forEach((s,i) => {
+    const lim = CHAR_LIMITS[s.type];
+    const hlCount = s.char_count.headline;
+    const shlCount = s.char_count.subheadline;
+    const bodyCount = s.char_count.body;
+
+    const card = document.createElement('div');
+    card.className = 'slide-card';
+    card.style.animationDelay = (i*0.07)+'s';
+    card.innerHTML = `
+      <div class="slide-mini ${SLIDE_BG[s.type]}">
+        <div>
+          <div class="slide-accent-bar ${BAR_CLR[s.type]}"></div>
+          <div class="slide-headline">${s.headline}</div>
+          <div class="slide-subheadline">${s.subheadline}</div>
+        </div>
+        <div class="slide-num-badge">${SLIDE_LABELS[s.type]}</div>
+      </div>
+      <div class="slide-card-footer">
+        <div class="char-counter">
+          <div class="cc-item"><span class="cc-dot ${ccClass(hlCount,lim.headline)}"></span>HL ${hlCount}/${lim.headline}</div>
+          <div class="cc-item"><span class="cc-dot ${ccClass(shlCount,lim.subheadline)}"></span>SHL ${shlCount}/${lim.subheadline}</div>
+          ${lim.body ? `<div class="cc-item"><span class="cc-dot ${ccClass(bodyCount,lim.body)}"></span>Body ${bodyCount}/${lim.body}</div>` : ''}
+        </div>
+        ${s.violations.length ? `<span style="font-size:10px;color:var(--amber)">⚠ ${s.violations.length}</span>` : '<span style="font-size:10px;color:var(--green)">✓</span>'}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Email
+  const e = doc.email;
+  const subjRatio = e.char_count.subject / EMAIL_LIMITS.subject * 100;
+  const bodyRatio = e.char_count.body / EMAIL_LIMITS.body * 100;
+  document.getElementById('email-body-wrap').innerHTML = `
+    <div class="email-field">
+      <div class="email-field-label">제목 (${e.char_count.subject}/${EMAIL_LIMITS.subject}자)</div>
+      <div class="email-subject">${e.subject}</div>
+      <div class="char-bar"><div class="char-bar-fill" style="width:${Math.min(subjRatio,100)}%;background:${subjRatio>100?'var(--red)':subjRatio>85?'var(--amber)':'var(--green)'}"></div></div>
+    </div>
+    <div class="email-field">
+      <div class="email-field-label">프리뷰 텍스트</div>
+      <div class="email-preview">${e.preview_text}</div>
+    </div>
+    <div class="email-field">
+      <div class="email-field-label">본문 (${e.char_count.body}/${EMAIL_LIMITS.body}자)</div>
+      <div class="email-body-text">${e.body}</div>
+      <div class="char-bar" style="margin-top:8px"><div class="char-bar-fill" style="width:${Math.min(bodyRatio,100)}%;background:${bodyRatio>100?'var(--red)':bodyRatio>85?'var(--amber)':'var(--green)'}"></div></div>
+    </div>
+    <div class="email-field">
+      <div class="email-field-label">CTA</div>
+      <div class="email-cta-line">${e.cta_line}</div>
+    </div>
+    <div class="email-field">
+      <div class="email-field-label">P.S.</div>
+      <div class="email-ps">${e.ps_line}</div>
+    </div>
+  `;
+
+  // JSON
+  document.getElementById('json-output').textContent = JSON.stringify(doc, null, 2);
+}
+
+function toggleJson() {
+  document.getElementById('json-output').classList.toggle('open');
+}
+
+function copyEmail() {
+  if (!currentDoc?.email) return;
+  const e = currentDoc.email;
+  const text = `Subject: ${e.subject}\n\n${e.body}\n\n${e.cta_line}\n\n${e.ps_line}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-email-btn');
+    btn.textContent = '✓ 복사됨!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 전체 복사';btn.classList.remove('copied')},2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Designer — opener ultra</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy-900:#0A1628;--navy-800:#0F2044;--navy-700:#162B5A;--navy-600:#1E3A70;
+  --navy-400:#2E5090;--navy-200:#6080C0;
+  --gray-50:#F7FAFC;--gray-100:#EDF2F7;--gray-200:#CBD5E0;
+  --gray-400:#718096;--gray-600:#4A5568;--gray-800:#2D3748;
+  --gold-500:#C9A84C;--gold-400:#E2B84E;--gold-100:#FFF8E7;
+  --white:#FFFFFF;--off-white:#F0F4F8;
+  --success:#2F855A;
+  --bg:#f4f3ef;--surface:#fff;--border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);
+  --text:#1a1a16;--text2:#6b6960;--text3:#b0aaa5;
+  --radius:14px;--radius-sm:8px;
+  --shadow:0 4px 12px rgba(0,0,0,0.05);--shadow-lg:0 8px 32px rgba(0,0,0,0.1);
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'Inter',-apple-system,sans-serif;
+}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* ── Header ── */
+header{display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:54px;background:var(--navy-900);
+  position:sticky;top:0;z-index:200}
+.logo{font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--white);letter-spacing:-0.3px}
+.logo em{color:var(--gold-400);font-style:italic}
+.stage-tag{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  color:var(--gold-400);background:rgba(201,168,76,0.12);
+  border:1px solid rgba(201,168,76,0.2);padding:4px 12px;border-radius:100px}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 54px)}
+
+/* ── Config Panel ── */
+.config-panel{background:var(--surface);border-right:1px solid var(--border);
+  padding:24px 22px;overflow-y:auto;
+  position:sticky;top:54px;height:calc(100vh - 54px)}
+.panel-block{margin-bottom:22px}
+.panel-block-title{font-size:10px;font-weight:600;letter-spacing:0.8px;
+  text-transform:uppercase;color:var(--text3);margin-bottom:12px;
+  display:flex;align-items:center;gap:6px}
+.panel-block-title::before{content:'';width:3px;height:11px;background:var(--navy-700);border-radius:2px;display:block}
+.form-group{margin-bottom:10px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--text2);
+  letter-spacing:0.3px;text-transform:uppercase;margin-bottom:5px}
+input[type=text],select{width:100%;height:38px;padding:0 11px;
+  background:var(--gray-50);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  font-family:var(--font-body);font-size:13px;color:var(--text);outline:none;
+  transition:border-color .2s}
+input:focus,select:focus{border-color:var(--navy-600);background:var(--white);
+  box-shadow:0 0 0 3px rgba(30,58,112,0.08)}
+input::placeholder{color:var(--text3)}
+select{cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%236b6960' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center}
+
+/* Focus pills (buyer focus) */
+.focus-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.focus-pill{padding:7px 10px;border-radius:7px;background:var(--gray-50);
+  border:1px solid var(--border2);font-size:11px;font-weight:500;color:var(--text2);
+  cursor:pointer;transition:all .15s;text-align:center}
+.focus-pill:hover{border-color:var(--navy-400);color:var(--navy-700)}
+.focus-pill.active{background:#EBF0FF;border-color:var(--navy-400);color:var(--navy-800);font-weight:600}
+
+/* Generate btn */
+.btn-gen{width:100%;height:44px;margin-top:6px;
+  background:var(--navy-800);color:var(--white);border:none;
+  border-radius:var(--radius-sm);font-family:var(--font-display);
+  font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.2px;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-gen:hover{background:var(--navy-700);box-shadow:0 4px 16px rgba(15,32,68,0.3);transform:translateY(-1px)}
+.btn-gen:active{transform:translateY(0)}
+.btn-gen:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ── Output ── */
+.output-panel{padding:32px 36px;overflow-y:auto}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;text-align:center;gap:14px}
+.empty-icon{width:72px;height:72px;background:var(--navy-800);border-radius:18px;
+  display:flex;align-items:center;justify-content:center;font-size:32px}
+.empty-title{font-family:var(--font-display);font-size:22px;color:var(--text2)}
+.empty-sub{font-size:13px;color:var(--text3);max-width:300px;line-height:1.65}
+
+/* Progress */
+.progress-section{margin-bottom:24px}
+.progress-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px 26px;box-shadow:var(--shadow)}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.progress-title{font-size:14px;font-weight:600;color:var(--text)}
+.progress-pct{font-size:13px;font-weight:700;color:var(--navy-700)}
+.progress-track{height:4px;background:var(--gray-100);border-radius:100px;overflow:hidden;margin-bottom:10px}
+.progress-fill{height:100%;background:var(--navy-700);border-radius:100px;
+  transition:width .6s cubic-bezier(.4,0,.2,1)}
+.progress-msg{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px}
+.spin{width:11px;height:11px;border:2px solid var(--border2);
+  border-top-color:var(--navy-700);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Results header */
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.results-title{font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--text);line-height:1.2}
+.results-meta{font-size:13px;color:var(--text2);margin-top:4px}
+.btn-download{display:flex;align-items:center;gap:7px;
+  height:40px;padding:0 18px;background:var(--navy-800);color:var(--white);
+  border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-download:hover{background:var(--navy-700)}
+
+/* Page previews */
+.pages-section{margin-bottom:28px}
+.pages-label{font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--text2);margin-bottom:14px;display:block}
+.pages-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.page-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;box-shadow:var(--shadow);cursor:pointer;
+  transition:box-shadow .2s,transform .2s;animation:fadeUp .3s ease both}
+.page-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Mini PDF page */
+.page-mini{height:130px;padding:12px;position:relative;overflow:hidden}
+.page-mini-cover{background:linear-gradient(135deg,var(--navy-900) 0%,var(--navy-800) 60%,#0D1E3A 100%)}
+.page-mini-content{background:var(--white)}
+.page-mini-ref{background:var(--navy-800)}
+
+/* Cover mini */
+.mini-cover-bar{height:2px;width:20px;background:var(--gold-500);margin-bottom:8px;border-radius:1px}
+.mini-headline{font-family:var(--font-display);font-size:8px;font-weight:700;color:var(--white);line-height:1.25;margin-bottom:4px}
+.mini-sub{font-size:6px;color:rgba(255,255,255,0.5);line-height:1.4}
+.mini-badge{display:inline-block;font-size:5px;font-weight:700;
+  background:rgba(201,168,76,0.15);color:var(--gold-400);
+  padding:2px 6px;border-radius:3px;margin-bottom:6px;letter-spacing:0.5px}
+.mini-metric-row{display:flex;gap:4px;margin-top:8px}
+.mini-metric{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
+  border-radius:3px;padding:4px;text-align:center}
+.mini-metric-val{font-size:8px;font-weight:700;color:var(--gold-400)}
+.mini-metric-lbl{font-size:4.5px;color:rgba(255,255,255,0.4)}
+
+/* Content page mini */
+.mini-header{height:18px;background:var(--navy-800);margin:-12px -12px 10px;
+  display:flex;align-items:center;padding:0 8px}
+.mini-header-label{font-size:5px;font-weight:700;color:var(--gold-400);letter-spacing:0.5px}
+.mini-header-title{font-size:7px;font-weight:700;color:var(--white);margin-top:1px}
+.mini-body-line{height:3px;background:var(--gray-100);border-radius:2px;margin-bottom:3px}
+.mini-card-row{display:flex;gap:4px;margin:8px 0}
+.mini-card{flex:1;height:28px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:3px;
+  display:flex;align-items:center;justify-content:center}
+.mini-card-val{font-size:9px;font-weight:700;color:var(--navy-700)}
+.mini-phase-row{display:flex;gap:3px;margin:8px 0}
+.mini-phase{flex:1;height:40px;border-radius:3px;padding:4px}
+.mini-phase-label{font-size:4.5px;font-weight:700}
+
+/* Reference mini */
+.mini-ref-header{height:18px;background:rgba(255,255,255,0.06);margin:-12px -12px 8px;padding:0 8px;
+  display:flex;align-items:center}
+.mini-ref-title{font-size:7px;font-weight:700;color:var(--white)}
+.mini-ref-card{display:flex;gap:5px;margin-bottom:5px;padding:5px;
+  background:rgba(255,255,255,0.05);border-radius:4px;border:1px solid rgba(255,255,255,0.08)}
+.mini-ref-logo{width:16px;height:16px;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:700;color:white;flex-shrink:0}
+.mini-ref-metrics{display:flex;flex-direction:column;gap:2px;flex:1}
+.mini-ref-metric{font-size:5px;color:rgba(255,255,255,0.6)}
+.mini-ref-metric strong{color:var(--gold-400)}
+.mini-ref-banner{margin-top:auto;height:16px;background:var(--navy-700);border-radius:3px;
+  display:flex;align-items:center;justify-content:space-around;padding:0 4px}
+.mini-banner-stat{font-size:5px;font-weight:700;color:var(--gold-400);text-align:center}
+
+/* Page label */
+.page-card-footer{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;border-top:1px solid var(--border);background:var(--gray-50)}
+.page-num{font-size:10px;font-weight:600;color:var(--text2)}
+.page-name{font-size:10px;color:var(--text3)}
+
+/* Features grid */
+.features-section{margin-bottom:24px}
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.feature-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);
+  animation:fadeUp .35s ease both}
+.feature-icon{font-size:18px;margin-bottom:8px}
+.feature-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.feature-desc{font-size:12px;color:var(--text2);line-height:1.55}
+
+/* References preview */
+.ref-section{margin-bottom:28px}
+.ref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ref-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);
+  animation:fadeUp .4s ease both}
+.ref-logo{width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:white;margin-bottom:10px;flex-shrink:0}
+.ref-company{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ref-industry{font-size:11px;color:var(--text3);margin-bottom:10px}
+.ref-metrics{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.ref-metric{display:flex;align-items:center;gap:6px;font-size:11px}
+.ref-metric-val{font-weight:700;color:var(--navy-700);min-width:60px}
+.ref-metric-label{color:var(--text2)}
+.ref-quote{font-size:11px;color:var(--text2);font-style:italic;line-height:1.55;
+  border-left:2px solid var(--gold-500);padding-left:8px}
+.ref-badge{display:inline-block;font-size:9px;font-weight:700;
+  background:var(--gold-100);color:var(--gold-500);
+  padding:2px 8px;border-radius:100px;border:1px solid rgba(201,168,76,0.2);margin-bottom:8px}
+
+/* Trust banner */
+.trust-banner{background:var(--navy-800);border-radius:var(--radius);
+  padding:20px 28px;display:flex;justify-content:space-around;align-items:center;
+  gap:12px;margin-bottom:24px}
+.trust-stat{text-align:center}
+.trust-val{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--gold-400)}
+.trust-lbl{font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+.trust-divider{width:1px;height:32px;background:rgba(255,255,255,0.1)}
+
+/* Section labels */
+.section-label{font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--text2);margin-bottom:12px;display:block}
+
+/* Disclaimer */
+.disclaimer{font-size:11px;color:var(--text3);font-style:italic;margin-top:8px;line-height:1.5}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .config-panel{position:static;height:auto}
+  .pages-grid{grid-template-columns:repeat(2,1fr)}
+  .ref-grid{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">opener<em>ultra</em></div>
+  <div class="stage-tag">DESIGNER · STAGE 7</div>
+</header>
+
+<div class="layout">
+
+<!-- ─── Config ─── -->
+<div class="config-panel">
+
+  <div class="panel-block">
+    <div class="panel-block-title">바이어 정보</div>
+    <div class="form-group">
+      <label class="form-label">기업명</label>
+      <input type="text" id="buyer-company" value="Kakao" placeholder="Kakao, Samsung..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">담당자</label>
+      <input type="text" id="buyer-name" value="Kim Minsu" placeholder="Kim Minsu" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">직책</label>
+      <input type="text" id="buyer-role" value="VP Sales" placeholder="VP Sales" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">산업군</label>
+      <select id="industry">
+        <option value="SaaS" selected>SaaS / Tech</option>
+        <option value="Finance">Finance / Fintech</option>
+        <option value="Healthcare">Healthcare</option>
+        <option value="Retail">Retail / E-commerce</option>
+        <option value="Manufacturing">Manufacturing</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="panel-block">
+    <div class="panel-block-title">제품</div>
+    <div class="form-group">
+      <label class="form-label">제품명</label>
+      <input type="text" id="product-name" value="OpenerUltra" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">헤드라인 (선택)</label>
+      <input type="text" id="headline" placeholder="How [Company] Can Close 40% More Deals" />
+    </div>
+  </div>
+
+  <div class="panel-block">
+    <div class="panel-block-title">차트 바이어 관심사</div>
+    <div class="focus-grid" id="focus-grid">
+      <div class="focus-pill active" data-focus="sales_impact">세일즈 임팩트</div>
+      <div class="focus-pill" data-focus="cost_roi">비용 / ROI</div>
+      <div class="focus-pill" data-focus="performance">성능</div>
+      <div class="focus-pill" data-focus="ease_of_use">사용 편의성</div>
+      <div class="focus-pill" data-focus="security">보안</div>
+      <div class="focus-pill" data-focus="innovation">혁신성</div>
+    </div>
+  </div>
+
+  <button class="btn-gen" id="gen-btn" onclick="generatePreview()">
+    ✦ 프리뷰 생성
+  </button>
+  <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px">
+    실제 PDF는 Python 환경에서 DesignerAgent.render() 호출
+  </div>
+</div>
+
+<!-- ─── Output ─── -->
+<div class="output-panel" id="output-panel">
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">🖨️</div>
+    <div class="empty-title">PDF 제안서 디자이너</div>
+    <div class="empty-sub">바이어 정보를 입력하고 생성하면 7-페이지 Navy/Gray 프리미엄 제안서 프리뷰가 펼쳐집니다.</div>
+  </div>
+  <div id="progress-section" style="display:none" class="progress-section">
+    <div class="progress-card">
+      <div class="progress-header">
+        <span class="progress-title" id="prog-title">PDF 합성 중…</span>
+        <span class="progress-pct" id="prog-pct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="progress-msg"><div class="spin"></div><span id="prog-msg">초기화 중…</span></div>
+    </div>
+  </div>
+  <div id="results" style="display:none"></div>
+</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   Reference DB (mirrors designer.py)
+═══════════════════════════════════════════════ */
+const REFS = {
+  SaaS:[
+    {company:"NorthStar CRM",logo:"NS",color:"#1E40AF",industry:"Sales Tech",team:"85 reps",
+     r1:"67% faster research",r2:"31% higher win rate",r3:"$2.4M added ARR",days:"90 days",
+     quote:"OpenerUltra became our #1 sales tool within 3 weeks."},
+    {company:"Veloxa AI",logo:"VX",color:"#065F46",industry:"AI Platform",team:"42 AEs",
+     r1:"3.1x pipeline velocity",r2:"22% lower CAC",r3:"NPS 9.4 from reps",days:"60 days",
+     quote:"Our reps stopped complaining about prep time entirely."},
+    {company:"Gridline HQ",logo:"GH",color:"#7C3AED",industry:"B2B Marketplace",team:"130 reps",
+     r1:"51% more meetings",r2:"18% shorter cycles",r3:"$890K saved",days:"120 days",
+     quote:"The personalized hooks alone tripled our reply rates."},
+  ],
+  Finance:[
+    {company:"Apex Capital",logo:"AC",color:"#1E3A5F",industry:"Investment",team:"28 advisors",
+     r1:"4.2x more meetings",r2:"44% faster cycles",r3:"$5.1M new AUM",days:"90 days",
+     quote:"We closed our largest deal using an OpenerUltra brief."},
+    {company:"Finsight Pro",logo:"FP",color:"#9A3412",industry:"Fintech",team:"67 reps",
+     r1:"59% fewer no-shows",r2:"37% higher conversion",r3:"2.8x pipeline growth",days:"75 days",
+     quote:"Every brief feels like it was written by our best researcher."},
+    {company:"Meridian Bank",logo:"MB",color:"#155E75",industry:"Banking",team:"210 reps",
+     r1:"46% faster prospecting",r2:"28% win rate up",r3:"$12M revenue impact",days:"180 days",
+     quote:"Compliance-ready briefs our legal team approved immediately."},
+  ],
+  Healthcare:[
+    {company:"MedPath Solutions",logo:"MP",color:"#065F46",industry:"HealthTech",team:"54 reps",
+     r1:"72% less admin",r2:"29% more demos",r3:"$3.2M ARR added",days:"90 days",
+     quote:"HIPAA-sensitive briefs that respected every compliance boundary."},
+    {company:"Quantum Health",logo:"QH",color:"#1E40AF",industry:"Pharma Sales",team:"180 reps",
+     r1:"38% shorter cycles",r2:"2.1x pipeline",r3:"$18M new revenue",days:"120 days",
+     quote:"Region-specific briefs gave our team an unfair advantage."},
+    {company:"PulseOS",logo:"PO",color:"#7E22CE",industry:"Digital Health",team:"33 AEs",
+     r1:"61% more outreach",r2:"41% reply rate",r3:"3.7x qualified pipeline",days:"45 days",
+     quote:"We booked 14 enterprise pilots in month one."},
+  ],
+  Retail:[
+    {company:"ShopSphere Inc.",logo:"SS",color:"#9A3412",industry:"E-commerce",team:"90 reps",
+     r1:"49% more demos",r2:"33% faster close",r3:"$4.8M incremental",days:"90 days",
+     quote:"Seasonal hooks timed perfectly to buyer calendars."},
+    {company:"Nexus Retail",logo:"NR",color:"#065F46",industry:"Retail Tech",team:"45 reps",
+     r1:"2.9x pipeline velocity",r2:"22% higher ACV",r3:"68% rep adoption",days:"60 days",
+     quote:"Our SDRs went from 3-4 emails/day to 20+."},
+    {company:"PrimeCommerce",logo:"PC",color:"#1E3A5F",industry:"Commerce AI",team:"112 reps",
+     r1:"55% more replies",r2:"39% higher conversion",r3:"$7.1M new ARR",days:"100 days",
+     quote:"The competitive intelligence cards changed every pitch."},
+  ],
+  Manufacturing:[
+    {company:"IronCore Systems",logo:"IC",color:"#374151",industry:"Industrial",team:"60 reps",
+     r1:"43% shorter cycles",r2:"26% higher win rate",r3:"$6.3M presales saved",days:"120 days",
+     quote:"Complex briefs that impressed every C-suite."},
+    {company:"Veraform MFG",logo:"VM",color:"#1E40AF",industry:"Manufacturing",team:"95 reps",
+     r1:"3.2x meeting conversion",r2:"51% less research",r3:"$9.4M pipeline",days:"90 days",
+     quote:"We finally have a repeatable enterprise deal process."},
+    {company:"Strata Industrial",logo:"SI",color:"#065F46",industry:"B2B Industrial",team:"34 reps",
+     r1:"64% richer discovery",r2:"35% higher quota",r3:"4.1x proposal acceptance",days:"75 days",
+     quote:"Every prospect felt like we'd studied them for months."},
+  ],
+};
+
+/* ═══════════════════════════════════════════════
+   State
+═══════════════════════════════════════════════ */
+let selectedFocus = 'sales_impact';
+document.getElementById('focus-grid').addEventListener('click', e => {
+  const pill = e.target.closest('.focus-pill');
+  if (!pill) return;
+  document.querySelectorAll('.focus-pill').forEach(p=>p.classList.remove('active'));
+  pill.classList.add('active');
+  selectedFocus = pill.dataset.focus;
+});
+
+/* ═══════════════════════════════════════════════
+   Generate Preview (simulated)
+═══════════════════════════════════════════════ */
+async function generatePreview() {
+  const company  = document.getElementById('buyer-company').value.trim() || 'Kakao';
+  const name     = document.getElementById('buyer-name').value.trim() || 'Kim Minsu';
+  const role     = document.getElementById('buyer-role').value.trim() || 'VP Sales';
+  const industry = document.getElementById('industry').value;
+  const product  = document.getElementById('product-name').value.trim() || 'OpenerUltra';
+  const headline = document.getElementById('headline').value.trim() ||
+                   `How ${company} Can Close 40% More Deals This Quarter`;
+
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('progress-section').style.display = 'block';
+
+  const steps = [
+    [0.10, '바이어 프로파일 분석 중…'],
+    [0.25, `${selectedFocus} 차트 데이터 생성 중…`],
+    [0.45, 'ReportLab 캔버스 초기화…'],
+    [0.60, '표지 & Executive Summary 렌더링…'],
+    [0.72, '솔루션 페이지 & 차트 삽입…'],
+    [0.83, 'Implementation Roadmap & Pricing 생성…'],
+    [0.93, `Global Success Reference (${industry}) 합성…`],
+    [1.00, 'PDF 저장 완료!'],
+  ];
+
+  for (const [pct, msg] of steps) {
+    document.getElementById('prog-fill').style.width = (pct*100)+'%';
+    document.getElementById('prog-pct').textContent = (pct*100).toFixed(0)+'%';
+    document.getElementById('prog-msg').textContent = msg;
+    document.getElementById('prog-title').textContent = `"${company}" 제안서 PDF 생성 중…`;
+    await new Promise(r=>setTimeout(r, 280+Math.random()*220));
+  }
+  await new Promise(r=>setTimeout(r,300));
+
+  document.getElementById('progress-section').style.display='none';
+  renderResults({company,name,role,industry,product,headline});
+  document.getElementById('gen-btn').disabled=false;
+}
+
+/* ═══════════════════════════════════════════════
+   Render Results
+═══════════════════════════════════════════════ */
+function renderResults({company,name,role,industry,product,headline}) {
+  const refs = REFS[industry] || REFS.SaaS;
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+
+  results.innerHTML = `
+    <!-- Header -->
+    <div class="results-header">
+      <div>
+        <div class="results-title">${company} 제안서 PDF</div>
+        <div class="results-meta">7 pages · Navy/Gray · A4 · ${product} · ${industry} reference</div>
+      </div>
+      <a class="btn-download" href="#" onclick="alert('Python 환경에서 DesignerAgent.render()를 실행하면 실제 PDF가 생성됩니다. opener_ultra_kakao_proposal.pdf 샘플을 확인해 보세요.')">
+        ↓ PDF 생성 방법
+      </a>
+    </div>
+
+    <!-- Page thumbnails -->
+    <div class="pages-section">
+      <span class="section-label">7-페이지 구조 미리보기</span>
+      <div class="pages-grid">
+        ${renderCoverMini(headline, name, role, company)}
+        ${renderContentMini('Executive Summary','The Challenge',2,'exec')}
+        ${renderSolutionMini(product)}
+        ${renderVisualizationMini()}
+        ${renderRoadmapMini()}
+        ${renderPricingMini()}
+        ${renderRefMini(refs)}
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="features-section">
+      <span class="section-label">디자인 시스템 · Navy/Gold 팔레트</span>
+      <div class="features-grid">
+        ${renderFeature('🎨','Navy/Gray 브랜드 팔레트','Navy 900→400 그레이디언트 + Gold 500 액센트. 모든 페이지에 일관된 헤더 바 + 골드 액센트 라인 적용.')}
+        ${renderFeature('📊','6단계 차트 정확 삽입','temp/ 폴더의 레이더·바·워터폴·퍼널 PNG를 비율 유지하며 4분할 레이아웃에 삽입. 없으면 플레이스홀더 자동 대체.')}
+        ${renderFeature('🔖','산업별 레퍼런스 DB','SaaS·Finance·Healthcare·Retail·Manufacturing 5개 산업 × 3개 레퍼런스 = 15개 PoC 케이스. 로고 이니셜 플레이스홀더.')}
+        ${renderFeature('📐','A4 정밀 레이아웃','ReportLab Canvas 직접 제어. 18mm 여백, 5mm 거터, px 단위 정확한 요소 배치. 글자 수 자동 트런케이션.')}
+      </div>
+    </div>
+
+    <!-- References preview -->
+    <div class="ref-section">
+      <span class="section-label">Global Success Reference · ${industry} 버티컬 (Page 7)</span>
+      <div class="ref-grid">
+        ${refs.map((ref,i)=>renderRefCard(ref,i)).join('')}
+      </div>
+    </div>
+
+    <!-- Trust banner -->
+    <div class="trust-banner">
+      ${[['500+','Enterprise Clients'],['98%','Renewal Rate'],['4.8/5','G2 Rating'],['$2.1B','Pipeline Influenced']]
+        .map(([v,l],i)=>`
+          ${i>0?'<div class="trust-divider"></div>':''}
+          <div class="trust-stat">
+            <div class="trust-val">${v}</div>
+            <div class="trust-lbl">${l}</div>
+          </div>`).join('')}
+    </div>
+
+    <!-- CLI usage -->
+    <div class="features-section">
+      <span class="section-label">Python CLI 사용법</span>
+      <div style="background:#0A1628;border-radius:var(--radius);padding:18px 22px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#9EB4CC;line-height:1.8">
+        <span style="color:#4B8BDB">from</span> engine.agents.designer <span style="color:#4B8BDB">import</span> DesignerAgent, DocMeta<br>
+        <span style="color:#4B8BDB">from</span> engine.agents.visualizer <span style="color:#4B8BDB">import</span> VisualizerAgent, ChartType, BuyerFocus<br><br>
+        <span style="color:#718096"># 1. 차트 생성 (6단계 visualizer)</span><br>
+        viz = VisualizerAgent(temp_dir=<span style="color:#C9A84C">"temp"</span>)<br>
+        radar = viz.generate(ChartType.RADAR, <span style="color:#C9A84C">"${company}"</span>, BuyerFocus.SALES_IMPACT, <span style="color:#C9A84C">"${product}"</span>)<br><br>
+        <span style="color:#718096"># 2. PDF 생성 (7단계 designer)</span><br>
+        agent = DesignerAgent(output_dir=<span style="color:#C9A84C">"temp"</span>)<br>
+        path = agent.render(DocMeta(<br>
+        &nbsp;&nbsp;buyer_company=<span style="color:#C9A84C">"${company}"</span>, buyer_name=<span style="color:#C9A84C">"${name}"</span>,<br>
+        &nbsp;&nbsp;buyer_role=<span style="color:#C9A84C">"${role}"</span>, industry=<span style="color:#C9A84C">"${industry}"</span>,<br>
+        &nbsp;&nbsp;product_name=<span style="color:#C9A84C">"${product}"</span>, chart_radar=radar,<br>
+        ))<br>
+        <span style="color:#2F855A">print</span>(<span style="color:#C9A84C">f"PDF: {'{'}path{'}'}"</span>)
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      * 위 미리보기는 브라우저 시뮬레이션입니다. 실제 기업급 PDF는 Python 환경에서 ReportLab으로 렌더링됩니다.
+      샘플 파일 <strong>opener_ultra_kakao_proposal.pdf</strong>를 다운로드해 실제 결과물을 확인하세요.
+    </div>
+  `;
+}
+
+/* ── Mini page builders ── */
+function renderCoverMini(headline, name, role, company) {
+  return `
+  <div class="page-card" style="animation-delay:.05s">
+    <div class="page-mini page-mini-cover">
+      <div class="mini-badge">EXECUTIVE PROPOSAL</div>
+      <div class="mini-cover-bar"></div>
+      <div class="mini-headline">${headline.slice(0,45)}</div>
+      <div class="mini-sub">For ${name} · ${role} · ${company}</div>
+      <div class="mini-metric-row">
+        <div class="mini-metric"><div class="mini-metric-val">90s</div><div class="mini-metric-lbl">Research</div></div>
+        <div class="mini-metric"><div class="mini-metric-val">40%</div><div class="mini-metric-lbl">Win rate</div></div>
+        <div class="mini-metric"><div class="mini-metric-val">14d</div><div class="mini-metric-lbl">Results</div></div>
+      </div>
+    </div>
+    <div class="page-card-footer">
+      <span class="page-num">Page 1</span>
+      <span class="page-name">Cover</span>
+    </div>
+  </div>`;
+}
+
+function renderContentMini(eyebrow, title, num, type) {
+  return `
+  <div class="page-card" style="animation-delay:${num*.05}s">
+    <div class="page-mini page-mini-content">
+      <div class="mini-header"><div><div class="mini-header-label">${eyebrow}</div><div class="mini-header-title">${title}</div></div></div>
+      <div class="mini-body-line" style="width:90%"></div>
+      <div class="mini-body-line" style="width:75%"></div>
+      <div class="mini-card-row">
+        <div class="mini-card"><div class="mini-card-val" style="font-size:7px;color:#2D3748">Pain 1</div></div>
+        <div class="mini-card"><div class="mini-card-val" style="font-size:7px;color:#2D3748">Pain 2</div></div>
+      </div>
+      <div class="mini-body-line" style="width:60%"></div>
+    </div>
+    <div class="page-card-footer">
+      <span class="page-num">Page ${num}</span>
+      <span class="page-name">Exec Summary</span>
+    </div>
+  </div>`;
+}
+
+function renderSolutionMini(product) {
+  return `
+  <div class="page-card" style="animation-delay:.15s">
+    <div class="page-mini page-mini-content">
+      <div class="mini-header"><div><div class="mini-header-label">OUR SOLUTION</div><div class="mini-header-title">${product}</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-top:6px">
+        ${['90s','8','3x','150','5min','4'].map((v,i)=>`
+          <div style="background:#EDF2F7;border-radius:3px;padding:4px;text-align:center">
+            <div style="font-size:9px;font-weight:700;color:#0F2044">${v}</div>
+            <div style="font-size:4px;color:#718096">feature</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="page-card-footer">
+      <span class="page-num">Page 3</span>
+      <span class="page-name">Solution</span>
+    </div>
+  </div>`;
+}
+
+function renderVisualizationMini() {
+  return `
+  <div class="page-card" style="animation-delay:.20s">
+    <div class="page-mini page-mini-content">
+      <div class="mini-header"><div><div class="mini-header-label">DATA ANALYSIS</div><div class="mini-header-title">Performance Intel</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px">
+        <div style="background:#1E3A70;border-radius:3px;height:44px;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:18px">🕸</span>
+        </div>
+        <div style="background:#1E3A70;border-radius:3px;height:44px;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:18px">📊</span>
+        </div>
+        <div style="background:#0F2044;border-radius:3px;height:36px;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:14px">💧</span>
+        </div>
+        <div style="background:#0F2044;border-radius:3px;height:36px;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:14px">🔽</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-card-footer">
+      <span class="page-num">Page 4</span>
+      <span class="page-name">Charts</span>
+    </div>
+  </div>`;
+}
+
+function renderRoadmapMini() {
+  const phases = [['Week 1–2','#162B5A'],['Week 3–6','#1E3A70'],['Week 7–12','#C9A84C']];
+  return `
+  <div class="page-card" style="animation-delay:.25s">
+    <div class="page-mini page-mini-content">
+      <div class="mini-header"><div><div class="mini-header-label">IMPLEMENTATION</div><div class="mini-header-title">90-Day Roadmap</div></div></div>
+      <div class="mini-phase-row">
+        ${phases.map(([l,c])=>`
+          <div class="mini-phase" style="background:${c}">
+            <div class="mini-phase-label" style="color:${c==='#C9A84C'?'#0A1628':'rgba(255,255,255,0.7)'}">${l}</div>
+          </div>`).join('')}
+      </div>
+      <div style="background:#FFF8E7;border:1px solid rgba(201,168,76,0.3);border-radius:3px;padding:4px;margin-top:4px">
+        <div style="font-size:5px;font-weight:700;color:#0F2044">14-Day Results Guarantee</div>
+      </div>
+    </div>
+    <div class="page-card-footer">
+      <span class="page-num">Page 5</span>
+      <span class="page-name">Roadmap</span>
+    </div>
+  </div>`;
+}
+
+function renderPricingMini() {
+  return `
+  <div class="page-card" style="animation-delay:.30s">
+    <div class="page-mini page-mini-content">
+      <div class="mini-header"><div><div class="mini-header-label">INVESTMENT</div><div class="mini-header-title">Pricing & ROI</div></div></div>
+      <div style="display:flex;gap:3px;margin-top:6px">
+        <div style="flex:1;background:#EDF2F7;border-radius:3px;padding:4px;text-align:center">
+          <div style="font-size:6px;font-weight:700;color:#718096">STARTER</div>
+          <div style="font-size:10px;font-weight:700;color:#0F2044">$89</div>
+        </div>
+        <div style="flex:1;background:#162B5A;border:1px solid #C9A84C;border-radius:3px;padding:4px;text-align:center">
+          <div style="font-size:5px;font-weight:700;color:#C9A84C">POPULAR</div>
+          <div style="font-size:10px;font-weight:700;color:white">$149</div>
+        </div>
+        <div style="flex:1;background:#EDF2F7;border-radius:3px;padding:4px;text-align:center">
+          <div style="font-size:6px;font-weight:700;color:#718096">ENTERPRISE</div>
+          <div style="font-size:8px;font-weight:700;color:#0F2044">Custom</div>
+        </div>
+      </div>
+      <div style="background:#EBF4FF;border-radius:3px;padding:4px;margin-top:6px">
+        <div style="font-size:5px;font-weight:700;color:#0F2044">ROI: $1.3M+ annual impact</div>
+      </div>
+    </div>
+    <div class="page-card-footer">
+      <span class="page-num">Page 6</span>
+      <span class="page-name">Pricing</span>
+    </div>
+  </div>`;
+}
+
+function renderRefMini(refs) {
+  return `
+  <div class="page-card" style="animation-delay:.35s">
+    <div class="page-mini page-mini-ref">
+      <div class="mini-ref-header"><div class="mini-ref-title">Global Success Reference</div></div>
+      ${refs.slice(0,2).map(r=>`
+        <div class="mini-ref-card">
+          <div class="mini-ref-logo" style="background:${r.color}">${r.logo}</div>
+          <div class="mini-ref-metrics">
+            <div class="mini-ref-metric"><strong>${r.r1}</strong></div>
+            <div class="mini-ref-metric"><strong>${r.r2}</strong></div>
+          </div>
+        </div>`).join('')}
+      <div class="mini-ref-banner">
+        ${['500+','98%','4.8/5'].map(v=>`<div class="mini-banner-stat">${v}</div>`).join('')}
+      </div>
+    </div>
+    <div class="page-card-footer">
+      <span class="page-num">Page 7</span>
+      <span class="page-name">References</span>
+    </div>
+  </div>`;
+}
+
+function renderFeature(icon, title, desc) {
+  return `
+  <div class="feature-card">
+    <div class="feature-icon">${icon}</div>
+    <div class="feature-title">${title}</div>
+    <div class="feature-desc">${desc}</div>
+  </div>`;
+}
+
+function renderRefCard(ref, i) {
+  return `
+  <div class="ref-card" style="animation-delay:${i*.08}s">
+    <div class="ref-badge">Results in ${ref.days}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div class="ref-logo" style="background:${ref.color}">${ref.logo}</div>
+      <div>
+        <div class="ref-company">${ref.company}</div>
+        <div class="ref-industry">${ref.industry} · ${ref.team}</div>
+      </div>
+    </div>
+    <div class="ref-metrics">
+      ${[ref.r1,ref.r2,ref.r3].map(r=>{
+        const parts = r.split(' ');
+        return `<div class="ref-metric">
+          <span class="ref-metric-val">${parts[0]}</span>
+          <span class="ref-metric-label">${parts.slice(1).join(' ')}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="ref-quote">"${ref.quote}"</div>
+  </div>`;
+}
+</script>
+</body>
+</html>

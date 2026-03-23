@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discovery Agent — opener ultra</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Pretendard:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d0d0d;
+  --bg2:       #161616;
+  --surface:   #1e1e1e;
+  --surface2:  #252525;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --text:      #f0ede8;
+  --text2:     #8a8680;
+  --text3:     #4a4845;
+  --accent:    #d4a96a;
+  --accent2:   #e8c99a;
+  --accent-bg: rgba(212,169,106,0.1);
+  --success:   #5bbf8e;
+  --success-bg:rgba(91,191,142,0.1);
+  --info:      #6fa8dc;
+  --info-bg:   rgba(111,168,220,0.1);
+  --radius:    20px;
+  --radius-sm: 12px;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-body:  'Pretendard', -apple-system, sans-serif;
+  --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(13,13,13,0.92);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+.logo {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.logo span { color: var(--accent); }
+
+.stage-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 6px 14px;
+  border-radius: 100px;
+}
+.stage-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.stage-dot.done { background: var(--success); }
+
+/* ── Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  flex: 1;
+  height: calc(100vh - 61px);
+}
+
+/* ── Chat Panel ── */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+/* Progress bar */
+.progress-bar-wrap {
+  padding: 0;
+  height: 3px;
+  background: var(--surface);
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+}
+
+/* Layer indicator */
+.layer-track {
+  display: flex;
+  gap: 0;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.layer-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  padding: 5px 12px;
+  border-radius: 100px;
+  transition: all 0.3s;
+  white-space: nowrap;
+  cursor: default;
+  letter-spacing: 0.2px;
+}
+.layer-step.active {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+.layer-step.done {
+  color: var(--success);
+}
+.layer-step-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Messages */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-behavior: smooth;
+}
+
+.msg {
+  display: flex;
+  gap: 12px;
+  animation: fadeUp 0.3s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg-avatar {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.msg-avatar.ai {
+  background: var(--accent-bg);
+  border: 1px solid rgba(212,169,106,0.2);
+}
+.msg-avatar.user {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+}
+
+.msg-body { flex: 1; }
+.msg-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.msg-bubble {
+  display: inline-block;
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 600px;
+}
+.msg.ai .msg-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+.msg.user .msg-bubble {
+  background: var(--accent-bg);
+  border: 1px solid rgba(212,169,106,0.2);
+  color: var(--text);
+  border-bottom-right-radius: 4px;
+}
+.msg.user {
+  flex-direction: row-reverse;
+}
+.msg.user .msg-name {
+  text-align: right;
+}
+
+.msg-layer-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+  margin-bottom: 6px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  letter-spacing: 0.3px;
+}
+
+/* Typing indicator */
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  width: fit-content;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text3);
+  animation: blink 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink {
+  0%,100% { opacity: 0.3; transform: scale(0.8); }
+  50%      { opacity: 1;   transform: scale(1);   }
+}
+
+/* Input area */
+.input-area {
+  padding: 20px 28px;
+  border-top: 1px solid var(--border);
+  background: rgba(13,13,13,0.6);
+  backdrop-filter: blur(8px);
+}
+.input-wrap {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 12px 14px;
+  transition: border-color 0.2s;
+}
+.input-wrap:focus-within {
+  border-color: rgba(212,169,106,0.4);
+}
+textarea#user-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  resize: none;
+  max-height: 160px;
+  min-height: 24px;
+  overflow-y: auto;
+}
+textarea#user-input::placeholder { color: var(--text3); }
+.send-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  color: #1a1000;
+  font-size: 16px;
+}
+.send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+.send-btn:active { transform: scale(0.96); }
+.send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+/* ── Side Panel ── */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--bg2);
+}
+
+.side-section {
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.side-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* Signal cards */
+.signal-list { display: flex; flex-direction: column; gap: 8px; }
+.signal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  animation: fadeUp 0.3s ease both;
+}
+.signal-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+.tag-pain     { background: rgba(240,68,82,0.12);  color: #f04452; }
+.tag-gain     { background: var(--success-bg);     color: var(--success); }
+.tag-competitive { background: var(--info-bg);     color: var(--info); }
+.tag-persona  { background: var(--accent-bg);      color: var(--accent); }
+
+.signal-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text2);
+}
+.signal-conf {
+  margin-top: 6px;
+  height: 2px;
+  background: var(--surface2);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.signal-conf-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 100px;
+}
+
+/* VP Card */
+.vp-card {
+  background: linear-gradient(135deg, #1a1500 0%, #1a1200 100%);
+  border: 1px solid rgba(212,169,106,0.25);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin: 0;
+  animation: fadeUp 0.5s ease both;
+}
+.vp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.vp-headline {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--accent2);
+  margin-bottom: 18px;
+  letter-spacing: -0.3px;
+}
+.vp-row {
+  margin-bottom: 14px;
+}
+.vp-row-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.vp-row-value {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.vp-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.vp-keyword {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: rgba(212,169,106,0.1);
+  border: 1px solid rgba(212,169,106,0.2);
+  color: var(--accent);
+}
+.vp-proof {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text2);
+  border-left: 2px solid rgba(212,169,106,0.3);
+  padding-left: 10px;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.7;
+}
+.empty-state-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.4; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .side-panel { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">opener<span>ultra</span> · <span style="font-size:15px;color:var(--text2);font-family:var(--font-body)">Discovery</span></div>
+  <div id="stage-pill" class="stage-pill">
+    <span class="stage-dot" id="stage-dot"></span>
+    <span id="stage-label">인터뷰 준비 중</span>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Chat -->
+  <div class="chat-panel">
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="prog-bar"></div></div>
+
+    <div class="layer-track" id="layer-track">
+      <div class="layer-step" data-layer="0"><span class="layer-step-dot"></span>표면 기술</div>
+      <div class="layer-step" data-layer="1"><span class="layer-step-dot"></span>사용 맥락</div>
+      <div class="layer-step" data-layer="2"><span class="layer-step-dot"></span>감정 동기</div>
+      <div class="layer-step" data-layer="3"><span class="layer-step-dot"></span>경쟁 우위</div>
+      <div class="layer-step" data-layer="4"><span class="layer-step-dot"></span>바이어 언어</div>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="user-input" placeholder="답변을 입력하세요…" rows="1" disabled></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>↑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side panel -->
+  <div class="side-panel">
+    <div class="side-section">
+      <div class="side-section-title">포착된 가치 신호</div>
+      <div class="signal-list" id="signal-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          인터뷰가 시작되면<br>가치 신호가 여기 표시됩니다
+        </div>
+      </div>
+    </div>
+    <div class="side-section" id="vp-section" style="display:none">
+      <div class="side-section-title">Value Proposition</div>
+      <div id="vp-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   StateManager (from engine/core.py)
+════════════════════════════════════════════════════════════════ */
+class EventBus {
+  constructor() { this._l = {}; this._h = []; }
+  on(t, fn) { (this._l[t] = this._l[t]||[]).push(fn); }
+  async emit(t, p) {
+    const ev = { type: t, payload: p, ts: Date.now() };
+    this._h.push(ev);
+    for (const fn of (this._l[t]||[])) await fn(ev);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ResponseAnalyzer (JS port)
+════════════════════════════════════════════════════════════════ */
+const PAIN_RE   = /불편|힘들|어렵|복잡|오래|느리|비싸|놓친|실수|잊|까먹|귀찮|번거|painful|annoying|slow|expensive|manual|error|miss|forget|hard/gi;
+const GAIN_RE   = /빠르|쉽|자동|절약|효율|편리|정확|신뢰|안전|수익|성장|fast|easy|auto|save|efficient|accurate|reliable|revenue|growth/gi;
+const COMP_RE   = /기존|원래|이전|다른|경쟁|비교|대신|대비|before|instead|competitor|compared|alternative|replace/gi;
+const PERSONA_RE= /팀장|대표|담당자|개발자|마케터|디자이너|스타트업|중소기업|manager|ceo|founder|developer|marketer|startup|SMB|enterprise/gi;
+
+function analyzeResponse(text) {
+  const signals = [];
+  let richness = Math.min(text.split(/\s+/).length / 80, 0.4);
+
+  const painHits = [...new Set((text.match(PAIN_RE)||[]).map(s=>s.toLowerCase()))];
+  if (painHits.length) {
+    signals.push({ layer: 2, abstracted: '페인: ' + painHits.join(', '), tags: ['pain'], confidence: Math.min(painHits.length*0.25, 0.9) });
+    richness += 0.2;
+  }
+  const gainHits = [...new Set((text.match(GAIN_RE)||[]).map(s=>s.toLowerCase()))];
+  if (gainHits.length) {
+    signals.push({ layer: 0, abstracted: '혜택: ' + gainHits.join(', '), tags: ['gain'], confidence: Math.min(gainHits.length*0.2, 0.85) });
+    richness += 0.2;
+  }
+  const compHits = [...new Set((text.match(COMP_RE)||[]).map(s=>s.toLowerCase()))];
+  if (compHits.length) {
+    signals.push({ layer: 3, abstracted: '경쟁 비교 발언 포착', tags: ['competitive'], confidence: 0.75 });
+    richness += 0.15;
+  }
+  const personaHits = [...new Set((text.match(PERSONA_RE)||[]).map(s=>s.toLowerCase()))];
+  if (personaHits.length) {
+    signals.push({ layer: 4, abstracted: '페르소나: ' + personaHits.join(', '), tags: ['persona'], confidence: 0.7 });
+    richness += 0.05;
+  }
+  return { signals, richness: Math.min(richness, 1.0) };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   QuestionStrategist + VP Synthesizer (JS port)
+════════════════════════════════════════════════════════════════ */
+const LAYER_META = [
+  { name: '표면 기술',  key: 'SURFACE'     },
+  { name: '사용 맥락',  key: 'CONTEXT'     },
+  { name: '감정 동기',  key: 'EMOTION'     },
+  { name: '경쟁 우위',  key: 'COMPETITIVE' },
+  { name: '바이어 언어', key: 'BUYER_LANG'  },
+];
+
+const LAYER_QS = [
+  [ // Layer 0 — Surface
+    "그 기능이 실제로 어떻게 동작하는지 조금 더 구체적으로 설명해 주시겠어요?",
+    "하루에 주로 누가, 얼마나 자주 쓰게 되나요?",
+    "가장 자주 쓰이는 핵심 기능을 딱 하나만 꼽는다면요?",
+  ],
+  [ // Layer 1 — Context
+    "이 제품을 쓰게 되는 가장 전형적인 상황을 하나 그려주세요. 예: '월요일 아침, 담당자가 ○○을 하다가 이 서비스를 켰다'처럼요.",
+    "주로 어떤 팀이나 직군이 도입을 먼저 결정하나요?",
+    "처음 쓰게 되는 계기가 주로 무엇인가요?",
+  ],
+  [ // Layer 2 — Emotion
+    "이 제품이 없으면 고객이 가장 불편한 순간은 언제인가요?",
+    "처음 성과를 경험했을 때 고객이 어떤 반응을 보였나요? 실제 피드백 문장이 있으면 그대로 말씀해 주세요.",
+    "이 제품을 쓰기 시작하면서 고객이 그만둔 행동이나 도구가 있나요?",
+  ],
+  [ // Layer 3 — Competitive
+    "지금 고객들이 이 문제를 어떻게 해결하고 있나요? (엑셀? 다른 툴?) 우리 제품과 무엇이 다른가요?",
+    "경쟁사 대비 가장 자신 있는 한 가지와, 그걸 느낀 구체적인 사례를 말씀해 주세요.",
+    "타 솔루션에서 우리 제품으로 넘어온 결정적인 이유가 무엇이었나요?",
+  ],
+  [ // Layer 4 — Buyer Language
+    "고객이 이 제품을 동료에게 추천할 때 실제로 어떤 표현을 쓰나요? 기억나는 문장이 있으면 그대로요.",
+    "만약 고객이 이 제품의 광고 카피를 쓴다면 뭐라고 할 것 같나요?",
+    "세일즈 미팅에서 '이거 좋다'는 반응이 나올 때 가장 자주 언급되는 단어나 표현은요?",
+  ],
+];
+
+const THIN_PROBES = [
+  "조금 더 구체적인 예시를 들어주실 수 있나요?",
+  "실제로 그런 일이 있었던 사례를 하나만 들어주세요.",
+  "수치나 시간, 비용으로 표현하면 어느 정도 차이인가요?",
+];
+const FOLLOWUP_TPL = [
+  "방금 말씀하신 '{kw}'가 정말 흥미롭습니다. 그 경험을 좀 더 구체적으로 이야기해 주실 수 있나요?",
+  "'{kw}'라고 하셨는데, 고객 입장에서 이게 왜 중요한가요?",
+  "'{kw}' 덕분에 고객이 실제로 어떤 결과를 얻었나요?",
+];
+
+function nextQuestion(layer, answer, signals, richness, qIdx) {
+  if (richness < 0.2 && answer.trim().length < 30)
+    return THIN_PROBES[qIdx % THIN_PROBES.length];
+  if (signals.length) {
+    const kw = signals[0].abstracted.split(':').pop().trim().split(',')[0].trim();
+    if (kw) return FOLLOWUP_TPL[qIdx % FOLLOWUP_TPL.length].replace('{kw}', kw);
+  }
+  const bank = LAYER_QS[layer] || [];
+  return bank[qIdx % bank.length] || "조금 더 자세히 말씀해 주실 수 있나요?";
+}
+
+function synthesizeVP(signals, history) {
+  const userText = history.filter(m=>m.role==='user').map(m=>m.content).join(' ');
+  const personaSig  = signals.find(s=>s.tags.includes('persona'));
+  const painSig     = signals.find(s=>s.tags.includes('pain'));
+  const gainSig     = signals.find(s=>s.tags.includes('gain'));
+  const compSig     = signals.find(s=>s.tags.includes('competitive'));
+
+  const persona  = personaSig ? personaSig.abstracted.split(':').pop().trim() : '비즈니스 의사결정자';
+  const corePain = painSig    ? painSig.abstracted : '반복적이고 비효율적인 기존 프로세스';
+  const gain     = gainSig    ? gainSig.abstracted : '더 빠르고 정확한 결과, 팀 생산성 향상';
+  const diff     = compSig    ? '경쟁 대비 명확한 사용성 우위 확인' : '기존 솔루션 대비 설정 없이 즉시 사용 가능';
+
+  // Keywords
+  const stopwords = new Set(['이','그','저','것','수','를','을','에','의','가','and','the','is','to','a','in','of']);
+  const words = userText.match(/[가-힣a-zA-Z]{2,}/g) || [];
+  const freq = {};
+  words.forEach(w => { w = w.toLowerCase(); if (!stopwords.has(w)) freq[w] = (freq[w]||0)+1; });
+  const keywords = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([w])=>w);
+
+  const headline = `${persona}를 위한, ${gain.split(':')[0].slice(0,30)}`;
+
+  const proofs = signals.filter(s=>s.confidence>0.5).slice(0,3).map(s=>
+    s.abstracted.length > 80 ? s.abstracted.slice(0,80)+'…' : s.abstracted
+  );
+
+  return { headline, persona, corePain, gain, diff, keywords, proofs };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Interview State Machine
+════════════════════════════════════════════════════════════════ */
+const state = {
+  status: 'idle',
+  currentLayer: 0,
+  layerQCount: [0,0,0,0,0],
+  allSignals: [],
+  history: [],
+};
+const MAX_Q_PER_LAYER = 3;
+const bus = new EventBus();
+
+bus.on('signal_captured', e => renderSignal(e.payload));
+bus.on('layer_advance',   e => updateLayerUI(e.payload.to));
+bus.on('vp_ready',        e => renderVP(e.payload));
+
+function shouldAdvance(signals, richness) {
+  const qc  = state.layerQCount[state.currentLayer];
+  const sc  = state.allSignals.filter(s=>s.layer===state.currentLayer||s.layer<=state.currentLayer).length;
+  return (richness >= 0.35 && sc >= 1) || qc >= MAX_Q_PER_LAYER;
+}
+
+async function processUserInput(text) {
+  state.history.push({ role:'user', content:text });
+  const { signals, richness } = analyzeResponse(text);
+
+  for (const sig of signals) {
+    state.allSignals.push(sig);
+    await bus.emit('signal_captured', sig);
+  }
+
+  state.layerQCount[state.currentLayer]++;
+
+  const advance = shouldAdvance(signals, richness);
+  if (advance) {
+    const next = state.currentLayer + 1;
+    if (next >= 5) {
+      await bus.emit('vp_ready', synthesizeVP(state.allSignals, state.history));
+      state.status = 'complete';
+      return null; // done
+    }
+    state.currentLayer = next;
+    state.layerQCount[next] = 0;
+    await bus.emit('layer_advance', { from: state.currentLayer-1, to: next });
+  }
+
+  const qIdx = state.layerQCount[state.currentLayer];
+  const q = nextQuestion(state.currentLayer, text, signals, richness, qIdx);
+  state.history.push({ role:'interviewer', content:q });
+  return { question: q, layer: state.currentLayer, progress: state.currentLayer / 5 };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   UI
+════════════════════════════════════════════════════════════════ */
+const messagesEl  = document.getElementById('messages');
+const inputEl     = document.getElementById('user-input');
+const sendBtnEl   = document.getElementById('send-btn');
+
+function appendMsg(role, content, layer) {
+  const isAI = role === 'interviewer';
+  const layerName = LAYER_META[layer]?.name || '';
+  const div = document.createElement('div');
+  div.className = `msg ${isAI ? 'ai' : 'user'}`;
+  div.innerHTML = `
+    <div class="msg-avatar ${isAI ? 'ai' : 'user'}">${isAI ? '🤖' : '👤'}</div>
+    <div class="msg-body">
+      <div class="msg-name">${isAI ? 'Discovery AI' : '응답자'}</div>
+      ${isAI && layerName ? `<div class="msg-layer-tag">${layerName}</div>` : ''}
+      <div class="msg-bubble">${content.replace(/\n/g,'<br>')}</div>
+    </div>
+  `;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function showTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.id = 'typing-indicator';
+  wrap.innerHTML = `
+    <div class="msg-avatar ai">🤖</div>
+    <div class="msg-body">
+      <div class="msg-name">Discovery AI</div>
+      <div class="typing-bubble">
+        <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+      </div>
+    </div>
+  `;
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+function hideTyping() {
+  document.getElementById('typing-indicator')?.remove();
+}
+
+function updateLayerUI(layerIdx) {
+  document.querySelectorAll('.layer-step').forEach((el, i) => {
+    el.classList.remove('active', 'done');
+    if (i < layerIdx)  el.classList.add('done');
+    if (i === layerIdx) el.classList.add('active');
+  });
+  document.getElementById('prog-bar').style.width = (layerIdx / 5 * 100) + '%';
+  document.getElementById('stage-label').textContent = LAYER_META[layerIdx]?.name || '완료';
+}
+
+const TAG_CLASSES = { pain:'tag-pain', gain:'tag-gain', competitive:'tag-competitive', persona:'tag-persona' };
+const TAG_LABELS  = { pain:'페인포인트', gain:'혜택/가치', competitive:'경쟁 비교', persona:'페르소나' };
+
+function renderSignal(sig) {
+  const list = document.getElementById('signal-list');
+  const empty = list.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  const tag = sig.tags?.[0] || 'gain';
+  const div = document.createElement('div');
+  div.className = 'signal-card';
+  div.innerHTML = `
+    <div class="signal-tag ${TAG_CLASSES[tag]||'tag-gain'}">${TAG_LABELS[tag]||tag}</div>
+    <div class="signal-text">${sig.abstracted}</div>
+    <div class="signal-conf">
+      <div class="signal-conf-fill" style="width:${Math.round((sig.confidence||0)*100)}%"></div>
+    </div>
+  `;
+  list.insertBefore(div, list.firstChild);
+}
+
+function renderVP(vp) {
+  const section = document.getElementById('vp-section');
+  section.style.display = 'block';
+  document.getElementById('vp-container').innerHTML = `
+    <div class="vp-card">
+      <div class="vp-badge">✦ Value Proposition</div>
+      <div class="vp-headline">${vp.headline}</div>
+      <div class="vp-row">
+        <div class="vp-row-label">타겟 페르소나</div>
+        <div class="vp-row-value">${vp.persona}</div>
+      </div>
+      <div class="vp-row">
+        <div class="vp-row-label">핵심 페인</div>
+        <div class="vp-row-value">${vp.corePain}</div>
+      </div>
+      <div class="vp-row">
+        <div class="vp-row-label">제공 혜택</div>
+        <div class="vp-row-value">${vp.gain}</div>
+      </div>
+      <div class="vp-row">
+        <div class="vp-row-label">차별점</div>
+        <div class="vp-row-value">${vp.diff}</div>
+      </div>
+      ${vp.proofs.length ? `
+      <div class="vp-row">
+        <div class="vp-row-label">근거 발언</div>
+        ${vp.proofs.map(p=>`<div class="vp-proof">${p}</div>`).join('')}
+      </div>` : ''}
+      <div class="vp-row">
+        <div class="vp-row-label">바이어 키워드</div>
+        <div class="vp-keywords">
+          ${vp.keywords.map(k=>`<span class="vp-keyword">${k}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 채팅에도 완료 메시지
+  appendMsg('interviewer',
+    '✦ Value Proposition 합성이 완료됐습니다!\n\n' +
+    '오른쪽 패널에서 도출된 핵심 가치를 확인하세요.\n' +
+    '이 결과를 바탕으로 랜딩 페이지, 세일즈 덱, 광고 카피에 활용할 수 있습니다.',
+    4
+  );
+  document.getElementById('stage-dot').classList.add('done');
+  document.getElementById('stage-label').textContent = '인터뷰 완료';
+  document.getElementById('prog-bar').style.width = '100%';
+  inputEl.disabled = true;
+  sendBtnEl.disabled = true;
+}
+
+/* ── Auto-resize textarea ── */
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + 'px';
+});
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || state.status === 'complete') return;
+
+  inputEl.value = '';
+  inputEl.style.height = 'auto';
+  inputEl.disabled = true;
+  sendBtnEl.disabled = true;
+
+  appendMsg('user', text, state.currentLayer);
+  showTyping();
+
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 600));
+  hideTyping();
+
+  const result = await processUserInput(text);
+  if (result) {
+    appendMsg('interviewer', result.question, result.layer);
+    inputEl.disabled = false;
+    sendBtnEl.disabled = false;
+    inputEl.focus();
+  }
+}
+
+/* ── Boot ── */
+(async function init() {
+  await new Promise(r => setTimeout(r, 400));
+  const opening = '안녕하세요! 저는 여러분의 제품/서비스에서 타겟 바이어가 가장 매력을 느낄 핵심 가치를 찾아드리는 Discovery AI입니다.\n\n먼저, 지금 만들고 계신 제품이나 서비스를 한 문장으로 소개해 주실 수 있나요?';
+  showTyping();
+  await new Promise(r => setTimeout(r, 900));
+  hideTyping();
+  appendMsg('interviewer', opening, 0);
+  state.history.push({ role:'interviewer', content: opening });
+  state.status = 'in_progress';
+  updateLayerUI(0);
+  inputEl.disabled = false;
+  sendBtnEl.disabled = false;
+  inputEl.focus();
+})();
+</script>
+</body>
+</html>
