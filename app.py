@@ -12,12 +12,8 @@ _ST = "streamlit" in sys.modules or any("streamlit" in a for a in sys.argv)
 
 
 ###################################################################
-#  A. STREAMLIT — Clay × Linear × Toss 스타일 완전 개편
-#
-#  Flow:
-#    landing  → URL 하나 입력
-#    research → Tavily 실시간 분석 로그
-#    editor   → GPT-4o-mini 생성 카피 편집 + PDF + 발송
+#  A. STREAMLIT V4 — B2B 컨설팅 펌 품격 × 대시보드 결과화면
+#  Flow: landing → research (st.status) → editor (2-col dashboard)
 ###################################################################
 if _ST:
     import re as _re
@@ -26,278 +22,298 @@ if _ST:
     st.set_page_config(
         page_title="Opener AI",
         page_icon="✦",
-        layout="centered",
+        layout="wide",
     )
 
-    # ── 공통 CSS (Toss × Linear) ──────────────────────────────────
+    # ── 공통 CSS ─────────────────────────────────────────────────
     st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body, [class*="css"], .stApp {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
     -webkit-font-smoothing: antialiased;
-    background: #ffffff !important;
+    background: #fafafa !important;
     color: #111827 !important;
 }
 
-[data-testid="stToolbar"]       { display: none !important; }
-[data-testid="stDecoration"]    { display: none !important; }
-footer                          { display: none !important; }
-#MainMenu                       { display: none !important; }
+[data-testid="stToolbar"], [data-testid="stDecoration"],
+footer, #MainMenu { display: none !important; }
 
+/* ── 컨테이너 너비 ── */
 .main .block-container {
-    max-width: 680px !important;
+    max-width: 1100px !important;
     margin: 0 auto !important;
-    padding: 3rem 1.5rem 6rem !important;
+    padding: 2.5rem 2rem 5rem !important;
 }
 
-/* ── 카드 ── */
+/* ── 카드 기본 ── */
 .card {
     background: #ffffff;
-    border: 1px solid #f0f0f0;
-    border-radius: 20px;
-    padding: 32px 36px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 28px 32px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.04);
     margin-bottom: 16px;
 }
+.card-sm {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px 22px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    margin-bottom: 12px;
+}
 
-/* ── 버튼 override ── */
+/* ── 인사이트 카드 색상 variants ── */
+.card-indigo {
+    background: linear-gradient(135deg,#eef2ff,#f5f3ff);
+    border: 1px solid #c7d2fe;
+}
+.card-amber {
+    background: linear-gradient(135deg,#fffbeb,#fef3c7);
+    border: 1px solid #fde68a;
+}
+.card-green {
+    background: linear-gradient(135deg,#f0fdf4,#dcfce7);
+    border: 1px solid #bbf7d0;
+}
+.card-slate {
+    background: linear-gradient(135deg,#f8fafc,#f1f5f9);
+    border: 1px solid #e2e8f0;
+}
+
+/* ── 버튼 ── */
 .stButton > button {
-    width: 100%;
     background: #111827 !important;
     color: #ffffff !important;
     font-family: 'Inter', sans-serif !important;
     font-size: 15px !important;
     font-weight: 600 !important;
-    padding: 14px 0 !important;
+    padding: 13px 0 !important;
     border-radius: 12px !important;
     border: none !important;
     letter-spacing: -0.2px !important;
     transition: all 0.15s ease !important;
-    box-shadow: 0 4px 14px rgba(17,24,39,0.2) !important;
+    box-shadow: 0 4px 12px rgba(17,24,39,.15) !important;
 }
 .stButton > button:hover {
     background: #1f2937 !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(17,24,39,0.28) !important;
+    box-shadow: 0 6px 18px rgba(17,24,39,.22) !important;
 }
-.stButton > button:active { transform: translateY(0) !important; }
 
-/* ── 입력창 ── */
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 15px !important;
-    color: #111827 !important;
-    background: #fafafa !important;
-    border: 1.5px solid #e5e7eb !important;
-    border-radius: 12px !important;
-    padding: 13px 16px !important;
-    transition: border-color 0.15s, box-shadow 0.15s !important;
-}
-.stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus {
-    border-color: #111827 !important;
-    box-shadow: 0 0 0 3px rgba(17,24,39,0.08) !important;
-    background: #ffffff !important;
-}
-.stTextInput > div > div > input::placeholder { color: #9ca3af !important; }
-
-/* ── form 전송 버튼 ── */
+/* ── form submit ── */
 .stFormSubmitButton > button {
     background: #111827 !important;
     color: #fff !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
     font-size: 15px !important;
-    padding: 14px 0 !important;
+    padding: 13px 0 !important;
     border: none !important;
-    box-shadow: 0 4px 14px rgba(17,24,39,0.2) !important;
+    box-shadow: 0 4px 12px rgba(17,24,39,.15) !important;
+    width: 100% !important;
 }
 .stFormSubmitButton > button:hover {
     background: #1f2937 !important;
     transform: translateY(-1px) !important;
 }
 
+/* ── 입력창 ── */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 14px !important;
+    color: #111827 !important;
+    background: #f9fafb !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    padding: 11px 14px !important;
+    transition: all 0.15s !important;
+}
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+    border-color: #6366f1 !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.1) !important;
+}
+
 /* ── 탭 ── */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 0 !important;
-    background: #f9fafb !important;
+    background: #f3f4f6 !important;
     border-radius: 12px !important;
     padding: 4px !important;
-    border: 1px solid #f0f0f0 !important;
+    gap: 2px !important;
+    border: none !important;
 }
 .stTabs [data-baseweb="tab"] {
     border-radius: 9px !important;
     font-weight: 500 !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     color: #6b7280 !important;
-    padding: 8px 18px !important;
+    padding: 7px 16px !important;
 }
 .stTabs [aria-selected="true"] {
     background: #ffffff !important;
     color: #111827 !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,.1) !important;
     font-weight: 600 !important;
+}
+
+/* ── selectbox ── */
+.stSelectbox > div > div {
+    border-radius: 10px !important;
+    border: 1.5px solid #e5e7eb !important;
+    font-size: 14px !important;
+}
+
+/* ── metric ── */
+[data-testid="metric-container"] {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px !important;
 }
 
 /* ── progress ── */
 .stProgress > div > div > div {
-    background: #111827 !important;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6) !important;
     border-radius: 100px !important;
-}
-
-/* ── 로그 박스 ── */
-.log-box {
-    background: #0f172a;
-    border-radius: 14px;
-    padding: 20px 24px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 13px;
-    line-height: 1.8;
-    color: #94a3b8;
-    min-height: 180px;
-    border: 1px solid #1e293b;
-}
-.log-box .log-ok   { color: #34d399; }
-.log-box .log-run  { color: #60a5fa; }
-.log-box .log-warn { color: #fbbf24; }
-.log-box .log-dim  { color: #475569; }
-
-/* ── 사이드바 숨기기 ── */
-[data-testid="stSidebar"] { display: none !important; }
-
-/* ── metric ── */
-[data-testid="metric-container"] {
-    background: #fafafa;
-    border: 1px solid #f0f0f0;
-    border-radius: 14px;
-    padding: 16px !important;
-}
-[data-testid="stMetricValue"] { font-size: 24px !important; font-weight: 700 !important; }
-
-/* ── 성공/오류 메시지 ── */
-.stSuccess, .stInfo, .stWarning, .stError {
-    border-radius: 12px !important;
-    font-size: 14px !important;
 }
 
 /* ── 다운로드 버튼 ── */
 .stDownloadButton > button {
-    background: #f9fafb !important;
+    background: #fff !important;
     color: #111827 !important;
     border: 1.5px solid #e5e7eb !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     font-weight: 600 !important;
-    font-size: 14px !important;
-    box-shadow: none !important;
+    font-size: 13px !important;
 }
 .stDownloadButton > button:hover {
-    background: #f3f4f6 !important;
+    background: #f9fafb !important;
     border-color: #d1d5db !important;
-    transform: translateY(-1px) !important;
+}
+
+/* ── sidebar 숨기기 ── */
+[data-testid="stSidebar"] { display: none !important; }
+
+/* ── 태그 pill ── */
+.tag-pill {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: .3px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+}
+.tag-pill-gray {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+.tag-pill-green {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+.tag-pill-amber {
+    background: #fffbeb;
+    color: #d97706;
 }
 </style>
 """, unsafe_allow_html=True)
 
     # ── 세션 초기화 ───────────────────────────────────────────────
-    defaults = {
-        "page":          "landing",
-        "target_url":    "",
-        "research_data": {},
-        "ai_copy":       {},
-        "extra_info":    {},
-    }
-    for k, v in defaults.items():
+    for k, v in {
+        "page": "landing", "target_url": "",
+        "research_data": {}, "ai_copy": {}, "extra_info": {},
+    }.items():
         if k not in st.session_state:
             st.session_state[k] = v
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    #  PAGE 1 — LANDING (URL 하나만)
+    #  PAGE 1 — LANDING
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     if st.session_state.page == "landing":
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        # 중앙 정렬 컬럼
+        _, col, _ = st.columns([1, 2.2, 1])
+        with col:
+            st.markdown("<div style='height:32px'></div>", unsafe_allow_html=True)
 
-        # 로고 + 헤드라인
-        st.markdown("""
-<div style="text-align:center; margin-bottom:48px">
-  <div style="display:inline-flex;align-items:center;gap:8px;
-       background:#f9fafb;border:1px solid #f0f0f0;border-radius:100px;
-       padding:6px 16px;margin-bottom:28px">
-    <span style="font-size:12px;font-weight:600;letter-spacing:.8px;
-          text-transform:uppercase;color:#6b7280">AI Sales Intelligence</span>
+            # 로고
+            st.markdown("""
+<div style="text-align:center;margin-bottom:40px">
+  <div style="display:inline-block;background:#f9fafb;border:1px solid #e5e7eb;
+       border-radius:100px;padding:5px 16px;margin-bottom:24px">
+    <span style="font-size:11px;font-weight:700;letter-spacing:1px;
+          text-transform:uppercase;color:#6b7280">B2B Sales Intelligence</span>
   </div>
-  <h1 style="font-size:48px;font-weight:800;color:#111827;
-       letter-spacing:-2px;line-height:1.1;margin-bottom:16px">
+  <h1 style="font-size:46px;font-weight:900;color:#111827;
+       letter-spacing:-2px;line-height:1.08;margin-bottom:14px">
     Opener<span style="color:#6366f1">AI</span>
   </h1>
-  <p style="font-size:18px;color:#6b7280;font-weight:400;
-      line-height:1.6;max-width:480px;margin:0 auto">
+  <p style="font-size:17px;color:#6b7280;line-height:1.65;max-width:420px;margin:0 auto">
     타겟 기업 URL 하나로<br>
     <strong style="color:#111827">글로벌 수준의 B2B 제안서</strong>를 10분 만에
   </p>
 </div>
 """, unsafe_allow_html=True)
 
-        # URL 입력 카드
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("""
-<p style="font-size:13px;font-weight:600;color:#374151;
-   letter-spacing:.3px;text-transform:uppercase;margin-bottom:10px">
-  타겟 기업 홈페이지
-</p>
+            # 입력 카드
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.markdown("""
+<p style="font-size:12px;font-weight:700;color:#6b7280;letter-spacing:.5px;
+   text-transform:uppercase;margin-bottom:10px">타겟 기업 홈페이지</p>
 """, unsafe_allow_html=True)
 
-        with st.form("url_form"):
-            url = st.text_input(
-                "URL",
-                placeholder="https://kakao.com",
-                label_visibility="collapsed",
-            )
-            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
             COUNTRY_OPTIONS = {
-                "🇺🇸 미국 (English)":           "usa",
-                "🇯🇵 일본 (日本語)":             "japan",
-                "🇩🇪 독일 (Deutsch)":            "germany",
-                "🇰🇷 한국 (한국어)":             "korea",
-                "🇨🇳 중국 (中文)":               "china",
-                "🇬🇧 영국 (English/UK)":         "uk",
-                "🇸🇬 동남아 (English)":          "sea",
-                "🇦🇪 중동 UAE (English)":        "uae",
-                "🇫🇷 프랑스 (Français)":         "france",
-                "🇧🇷 브라질 (Português)":        "brazil",
+                "🇺🇸 미국 (English)":            "usa",
+                "🇯🇵 일본 (日本語)":              "japan",
+                "🇩🇪 독일 (Deutsch)":             "germany",
+                "🇰🇷 한국 (한국어)":              "korea",
+                "🇨🇳 중국 (中文)":                "china",
+                "🇬🇧 영국 (English/UK)":          "uk",
+                "🇸🇬 동남아 (English)":           "sea",
+                "🇦🇪 중동 UAE (English)":         "uae",
+                "🇫🇷 프랑스 (Français)":          "france",
+                "🇧🇷 브라질 (Português)":         "brazil",
             }
-            country_label = st.selectbox(
-                "타겟 국가 (제안서 언어 자동 설정)",
-                list(COUNTRY_OPTIONS.keys()),
-                index=0,
-            )
-            st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-            submitted = st.form_submit_button("✦  AI 분석 시작", use_container_width=True)
 
-        st.markdown('</div>', unsafe_allow_html=True)
+            with st.form("url_form"):
+                url = st.text_input("URL", placeholder="https://kakao.com",
+                                    label_visibility="collapsed")
+                st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+                country_label = st.selectbox(
+                    "타겟 국가", list(COUNTRY_OPTIONS.keys()), index=0)
+                st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+                submitted = st.form_submit_button(
+                    "✦  AI 분석 시작", use_container_width=True)
 
-        # 소셜 프루프
-        st.markdown("""
-<div style="display:flex;justify-content:center;gap:32px;margin-top:32px">
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # 소셜 프루프
+            st.markdown("""
+<div style="display:flex;justify-content:center;gap:28px;margin-top:28px;padding:20px 0">
   <div style="text-align:center">
-    <div style="font-size:22px;font-weight:800;color:#111827">10분</div>
-    <div style="font-size:12px;color:#9ca3af;margin-top:2px">제안서 완성</div>
+    <div style="font-size:20px;font-weight:800;color:#111827">10분</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:2px">제안서 완성</div>
   </div>
-  <div style="width:1px;background:#f0f0f0"></div>
+  <div style="width:1px;background:#e5e7eb"></div>
   <div style="text-align:center">
-    <div style="font-size:22px;font-weight:800;color:#111827">10개국</div>
-    <div style="font-size:12px;color:#9ca3af;margin-top:2px">문화 맞춤 전략</div>
+    <div style="font-size:20px;font-weight:800;color:#111827">10개국</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:2px">언어 현지화</div>
   </div>
-  <div style="width:1px;background:#f0f0f0"></div>
+  <div style="width:1px;background:#e5e7eb"></div>
   <div style="text-align:center">
-    <div style="font-size:22px;font-weight:800;color:#111827">+10.2%</div>
-    <div style="font-size:12px;color:#9ca3af;margin-top:2px">Win Rate 향상</div>
+    <div style="font-size:20px;font-weight:800;color:#111827">+10.2%</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:2px">Win Rate 향상</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -306,8 +322,8 @@ footer                          { display: none !important; }
             if not url.strip() or not url.strip().startswith("http"):
                 st.error("올바른 URL을 입력해 주세요 (https://로 시작)")
             else:
-                st.session_state.target_url  = url.strip()
-                st.session_state.extra_info  = {
+                st.session_state.target_url = url.strip()
+                st.session_state.extra_info = {
                     "product":       "",
                     "value":         "",
                     "country":       COUNTRY_OPTIONS[country_label],
@@ -317,7 +333,7 @@ footer                          { display: none !important; }
                 st.rerun()
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    #  PAGE 2 — RESEARCH (Tavily 분석 + 실시간 로그)
+    #  PAGE 2 — RESEARCH (st.status 세련된 진행 상태)
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif st.session_state.page == "research":
 
@@ -328,248 +344,232 @@ footer                          { display: none !important; }
         country       = extra.get("country",       "usa")
         country_label = extra.get("country_label", "🇺🇸 미국 (English)")
 
-        # 도메인 추출
-        domain = _re.sub(r"https?://(www\.)?", "", url).rstrip("/").split("/")[0]
+        domain  = _re.sub(r"https?://(www\.)?", "", url).rstrip("/").split("/")[0]
+        co_name = domain.split(".")[0].capitalize()
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(f"""
-<div style="text-align:center;margin-bottom:32px">
-  <div style="font-size:13px;font-weight:600;color:#6366f1;letter-spacing:.5px;
+        # 헤더
+        _, hcol, _ = st.columns([1, 3, 1])
+        with hcol:
+            st.markdown(f"""
+<div style="text-align:center;padding:32px 0 24px">
+  <div style="font-size:12px;font-weight:700;color:#6366f1;letter-spacing:.8px;
        text-transform:uppercase;margin-bottom:10px">AI 분석 중</div>
-  <h2 style="font-size:28px;font-weight:800;color:#111827;letter-spacing:-1px">
+  <h2 style="font-size:26px;font-weight:800;color:#111827;letter-spacing:-1px;margin-bottom:6px">
     {domain}
   </h2>
-  <p style="font-size:14px;color:#9ca3af;margin-top:6px">
-    최신 뉴스 · 재무 신호 · 페인포인트를 수집하고 있습니다
-  </p>
+  <p style="font-size:13px;color:#9ca3af">{country_label} 타겟 제안서 생성 중</p>
 </div>
 """, unsafe_allow_html=True)
 
-        # 로그 컨테이너
-        log_box    = st.empty()
-        prog_bar   = st.progress(0, text="")
-        status_txt = st.empty()
-
-        logs = []
-        def render_log():
-            html = '<div class="log-box">' + "".join(logs) + "</div>"
-            log_box.markdown(html, unsafe_allow_html=True)
-
-        def add_log(msg: str, kind: str = "run"):
-            ts = time.strftime("%H:%M:%S")
-            css = {"ok": "log-ok", "run": "log-run", "warn": "log-warn", "dim": "log-dim"}.get(kind, "log-run")
-            logs.append(f'<div><span class="log-dim">[{ts}]</span> <span class="{css}">{msg}</span></div>')
-            render_log()
+        _, pcol, _ = st.columns([1, 3, 1])
+        with pcol:
+            prog_ph = st.empty()
+            prog_ph.progress(0, text="분석 준비 중…")
 
         research = {}
+        copy     = {}
 
-        # Step 1: DNS / 접속 확인
-        add_log(f"→ Connecting to {domain}...", "run")
-        prog_bar.progress(8, text="도메인 확인 중…")
-        time.sleep(0.4)
-        add_log(f"✓ Host resolved: {domain}", "ok")
+        # ── STEP 1: 웹사이트 구조 분석 ──────────────────────────
+        with st.status("**1단계** — 웹사이트 및 최신 정보 수집 중…", expanded=True) as s1:
+            st.write("🌐 도메인 접근 및 공개 데이터 수집")
+            prog_ph.progress(12, text="웹사이트 분석 중…")
+            time.sleep(0.3)
 
-        # Step 2: Tavily 검색
-        add_log("→ Fetching latest news & signals via Tavily...", "run")
-        prog_bar.progress(20, text="뉴스 수집 중…")
+            tavily_key = st.secrets.get("TAVILY_API_KEY", "")
+            signals    = []
 
-        tavily_key = st.secrets.get("TAVILY_API_KEY", "")
-        if tavily_key:
-            try:
-                import httpx
-                queries = [
-                    f"{domain} latest news 2024 2025",
-                    f"{domain} business challenges pain points",
-                    f"{domain} funding revenue growth",
-                ]
-                all_results = []
-                for i, q in enumerate(queries):
-                    add_log(f"→ Query {i+1}/3: \"{q[:48]}...\"", "run")
-                    prog_bar.progress(20 + i * 15, text=f"검색 중 ({i+1}/3)…")
-                    r = httpx.post(
-                        "https://api.tavily.com/search",
-                        json={"api_key": tavily_key, "query": q,
-                              "max_results": 3, "search_depth": "advanced"},
-                        timeout=15,
-                    )
-                    if r.status_code == 200:
-                        results = r.json().get("results", [])
-                        all_results.extend(results)
-                        add_log(f"✓ Found {len(results)} results", "ok")
-                    else:
-                        add_log(f"⚠ Tavily returned {r.status_code}", "warn")
-                    time.sleep(0.3)
+            if tavily_key:
+                try:
+                    import httpx
+                    queries = [
+                        f"{domain} latest news 2024 2025",
+                        f"{domain} business strategy challenges",
+                        f"{domain} revenue growth funding",
+                    ]
+                    all_results = []
+                    for i, q in enumerate(queries):
+                        st.write(f"🔍 검색 중: `{q[:55]}…`")
+                        prog_ph.progress(15 + i * 12, text=f"뉴스 수집 중… ({i+1}/3)")
+                        try:
+                            r = httpx.post(
+                                "https://api.tavily.com/search",
+                                json={"api_key": tavily_key, "query": q,
+                                      "max_results": 3, "search_depth": "advanced"},
+                                timeout=15,
+                            )
+                            if r.status_code == 200:
+                                results = r.json().get("results", [])
+                                all_results.extend(results)
+                                st.write(f"✅ {len(results)}개 신호 수집")
+                        except Exception:
+                            st.write("⚠️ 검색 타임아웃 — 다음 단계 진행")
+                        time.sleep(0.2)
 
-                # 상위 3개 신호 추출
-                signals = []
-                seen = set()
-                for item in all_results:
-                    title = item.get("title", "")
-                    if title and title not in seen:
-                        seen.add(title)
-                        signals.append({
-                            "title":   title,
-                            "snippet": item.get("content", "")[:200],
-                            "url":     item.get("url", ""),
-                        })
-                    if len(signals) >= 3:
-                        break
+                    seen = set()
+                    for item in all_results:
+                        title = item.get("title", "")
+                        if title and title not in seen:
+                            seen.add(title)
+                            # UTF-8 인코딩 안전 처리
+                            safe_title   = title.encode("utf-8", errors="replace").decode("utf-8")
+                            safe_snippet = item.get("content", "")[:200].encode("utf-8", errors="replace").decode("utf-8")
+                            signals.append({
+                                "title":   safe_title,
+                                "snippet": safe_snippet,
+                                "url":     item.get("url", ""),
+                            })
+                        if len(signals) >= 3:
+                            break
 
-                research["signals"] = signals
-                add_log(f"✓ Extracted {len(signals)} key signals", "ok")
+                    research["signals"] = signals
+                    st.write(f"✅ 총 {len(signals)}개 핵심 인사이트 추출 완료")
 
-            except Exception as e:
-                add_log(f"⚠ Tavily error: {str(e)[:60]}", "warn")
+                except Exception as e:
+                    st.write(f"⚠️ Tavily 오류: {str(e)[:60]}")
+                    research["signals"] = []
+            else:
+                st.write("ℹ️ TAVILY_API_KEY 미설정 — 도메인 기반 추론 모드")
                 research["signals"] = []
-        else:
-            add_log("⚠ TAVILY_API_KEY not set — using domain inference", "warn")
-            research["signals"] = []
 
-        # Step 3: GPT-4o-mini — McKinsey급 마스터 프롬프트 + 현지화 엔진 V3.0
-        prog_bar.progress(65, text="AI 전략 분석 중…")
-        add_log("→ Engaging McKinsey-grade strategic AI...", "run")
-        add_log(f"→ Loading localization engine: {country_label}", "run")
-        time.sleep(0.3)
+            s1.update(label="**1단계** — 정보 수집 완료 ✓", state="complete", expanded=False)
 
-        signals_text = ""
-        for i, s in enumerate(research.get("signals", []), 1):
-            signals_text += f"[Signal {i}] {s['title']}\n{s['snippet']}\n\n"
+        # ── STEP 2: 국가별 비즈니스 매너 매핑 ──────────────────
+        with st.status("**2단계** — 국가별 비즈니스 전략 매핑 중…", expanded=True) as s2:
+            st.write(f"🌍 {country_label} 비즈니스 문화 분석")
+            prog_ph.progress(58, text="현지화 전략 로딩 중…")
+            time.sleep(0.4)
 
-        co_name = domain.split(".")[0].capitalize()
-
-        # ── 국가별 현지화 프로파일 ──────────────────────────────────
-        LP = {
-            "usa":     dict(lang="English",             persona="a top SaaS enterprise AE in San Francisco",                       tone="Direct, punchy, ROI-first. Short sentences. Lead with the bottom line.",  jargon="pipeline, win rate, ACV, ICP, quota attainment",   greeting="",                        taboo="Never say 'I hope this email finds you well'."),
-            "japan":   dict(lang="Japanese",             persona="a senior enterprise sales exec at a top Japanese consulting firm",  tone="Extremely formal keigo throughout. Trust-first. Emphasize long-term partnership and risk reduction.", jargon="稟議, 御社, 弊社, 課題解決, 導入実績, 効率化, DX推進", greeting="いつもお世話になっております。", taboo="Never be pushy. Never skip formal opener. Never use urgency tactics."),
-            "germany": dict(lang="German",               persona="a senior B2B sales director at a German enterprise software firm",   tone="Precise, data-heavy, logical. Use statistics and structured arguments. Avoid all hyperbole.",    jargon="Effizienzsteigerung, Skalierbarkeit, ROI, Digitalisierung, DSGVO-konform", greeting="Sehr geehrte Damen und Herren,", taboo="Never use superlatives without data backing. Never be informal."),
-            "korea":   dict(lang="Korean",               persona="a top B2B enterprise sales manager at a leading Korean tech company", tone="Professional and warm. Use 존댓말 throughout. Reference domestic case studies and proven results.", jargon="영업 효율화, 의사결정자, 레퍼런스, POC, 도입 사례, ROI, 비용 절감, 업무 자동화", greeting="안녕하세요.",              taboo="Never use informal speech. Always include domestic reference cases."),
-            "china":   dict(lang="Simplified Chinese",   persona="a senior B2B sales director with deep enterprise ties in China",     tone="Relationship-first. Emphasize mutual benefit (互利共赢) and long-term partnership. Reference authority and scale.", jargon="数字化转型, 降本增效, 合作伙伴, 赋能, 生态, ROI, 标杆案例", greeting="您好，",               taboo="Never use aggressive hard-sell tactics. Never skip relationship-building."),
-            "uk":      dict(lang="English (UK)",         persona="a senior enterprise AE at a top London B2B SaaS firm",               tone="Understated, dry wit, professional. Less hype than US English. Lead with insight not urgency.", jargon="pipeline, business case, ROI, procurement, cost-benefit, stakeholder, licence", greeting="", taboo="Never over-hype. Never use Americanisms like 'awesome' or 'crush it'."),
-            "sea":     dict(lang="English",              persona="a regional B2B sales director covering Singapore, Indonesia, Malaysia",tone="Warm, relationship-aware, value-focused. Emphasize cost efficiency and local support.",       jargon="ROI, cost savings, scalability, localisation, digital transformation",   greeting="",                        taboo="Never ignore relationship-building. Never assume Western-only references."),
-            "uae":     dict(lang="English",              persona="a senior B2B consultant working with C-suite in UAE and GCC region",  tone="Formal, prestige-aware, relationship-first. Reference Vision 2030 where relevant.",            jargon="strategic partnership, ROI, Vision 2030, digital transformation, C-suite", greeting="",                       taboo="Never be too casual. Never pressure for quick decisions."),
-            "france":  dict(lang="French",               persona="un directeur commercial senior dans une grande entreprise B2B française", tone="Élégant, structuré, intellectuellement rigoureux. Les Français apprécient la logique.",     jargon="transformation digitale, ROI, efficacité opérationnelle, partenariat stratégique", greeting="Madame, Monsieur,", taboo="Jamais d'anglicismes inutiles. Évitez la familiarité excessive."),
-            "brazil":  dict(lang="Brazilian Portuguese", persona="um diretor de vendas B2B sênior com experiência no mercado brasileiro", tone="Warm, relationship-driven, enthusiastic but professional. Brazilians value personal connection.", jargon="ROI, pipeline, eficiência, transformação digital, parceria estratégica, receita recorrente", greeting="Prezado(a),", taboo="Nunca seja muito formal ou frio. Nunca ignore o aspecto relacional."),
-        }
-        lp = LP.get(country, LP["usa"])
-        add_log(f"✓ Language profile loaded: {lp['lang']}", "ok")
-
-        # ── McKinsey 마스터 시스템 프롬프트 (현지화 적용) ──────────
-        MSYS = (
-            f"You are {lp['persona']}, also a McKinsey-trained B2B strategist.\n"
-            f"You have 20 years of enterprise sales experience. "
-            f"Your proposals are read by C-suite executives and close deals.\n\n"
-            f"OUTPUT LANGUAGE: {lp['lang']}\n"
-            f"ALL output fields must be written ENTIRELY in {lp['lang']}.\n"
-            f"If input is in Korean or any other language, TRANSLATE and ELEVATE to {lp['lang']}.\n\n"
-            f"TONE & STYLE: {lp['tone']}\n"
-            f"PREFERRED JARGON (use naturally): {lp['jargon']}\n"
-            f"GREETING CONVENTION: {lp['greeting'] if lp['greeting'] else 'No formal greeting — open with a sharp business insight.'}\n\n"
-            f"IRON RULES:\n"
-            f"1. HYPER-CONTEXT: Use the buyer's actual recent signals in every section.\n"
-            f"2. FEAR & GREED: Calculate opportunity cost with real numbers in roi_calculation.\n"
-            f"3. DYNAMIC TONE: Classify company as innovative or conservative, adapt accordingly.\n"
-            f"4. REAL REFERENCES: Use actual named companies as proof. NEVER write 'Competitor A'.\n"
-            f"5. ZERO TEMPLATES: Every sentence must be original. No mechanical fill-in.\n"
-            f"6. {lp['taboo']}\n"
-            f"7. Output ONLY valid JSON. No markdown. No preamble. No explanation."
-        )
-
-        # ── 마스터 유저 프롬프트 ────────────────────────────────────
-        MUSR = (
-            f"Write the most compelling B2B proposal for this buyer, entirely in {lp['lang']}.\n\n"
-            f"SELLER: {product} — {value}\n"
-            f"BUYER: {domain} ({co_name})\n"
-            f"REAL-TIME SIGNALS:\n{signals_text.strip() if signals_text.strip() else 'None available — use deep domain knowledge about ' + domain}\n\n"
-            f"Deliver all 8 fields in {lp['lang']}:\n"
-            f"1. company_tone: 'conservative' or 'innovative'\n"
-            f"2. company_summary: 2 sentences — what they do + current strategic moment (use signals)\n"
-            f"3. pain_hypothesis: 1 sentence — their #1 acute pain RIGHT NOW\n"
-            f"4. headline: max 52 chars, outcome-led, NOT 'Why X Needs Y'\n"
-            f"5. exec_body: 3 sentences — signal insight → cost of inaction → {product} solution\n"
-            f"6. roi_calculation: 2 sentences — show the math + name a real proof company\n"
-            f"7. email_subject: max 48 chars, personal, curiosity-driven\n"
-            f"8. email_body: open with {lp['greeting'] if lp['greeting'] else 'sharp observation about their business'}, "
-            f"then pain → proof → soft CTA\n\n"
-            + '{"company_tone":"...","company_summary":"...","pain_hypothesis":"...","headline":"...","exec_body":"...","roi_calculation":"...","email_subject":"...","email_body":"..."}'
-        )
-
-        copy = {}
-        openai_key = st.secrets.get("OPENAI_API_KEY", "")
-        if openai_key:
-            try:
-                from openai import OpenAI
-                oai = OpenAI(api_key=openai_key)
-                add_log(f"→ Generating {lp['lang']} copy (McKinsey mode)...", "run")
-                prog_bar.progress(78, text=f"{lp['lang']} 카피 생성 중…")
-                resp = oai.chat.completions.create(
-                    model="gpt-4o-mini",
-                    temperature=0.70,
-                    max_tokens=1400,
-                    messages=[
-                        {"role": "system", "content": MSYS},
-                        {"role": "user",   "content": MUSR},
-                    ],
-                )
-                raw = resp.choices[0].message.content.strip()
-                cleaned = _re.sub(r"```(?:json)?|```", "", raw).strip()
-                m = _re.search(r"\{.*\}", cleaned, _re.DOTALL)
-                if m:
-                    copy = json.loads(m.group())
-                    tone = copy.get("company_tone", "unknown")
-                    add_log(f"✓ Profile: {tone} | Language: {lp['lang']}", "ok")
-                else:
-                    add_log("⚠ JSON parse failed — smart fallback active", "warn")
-            except Exception as e:
-                add_log(f"⚠ OpenAI error: {str(e)[:70]}", "warn")
-        else:
-            add_log("⚠ OPENAI_API_KEY not set — smart fallback active", "warn")
-
-        # ── 스마트 폴백 (API 키 없을 때도 고퀄) ─────────────────────
-        if not copy:
-            co  = co_name
-            sig = research.get("signals", [{}])[0].get("title", "") if research.get("signals") else ""
-            copy = {
-                "company_tone":     "innovative",
-                "company_summary":  (
-                    f"{co} operates at a critical inflection point where sales efficiency "
-                    f"has become a board-level priority. "
-                    + (f"Recent signals including '{sig[:60]}' suggest they are actively " if sig else "They are actively ")
-                    + "navigating the challenges of scaling revenue operations at pace."
-                ),
-                "pain_hypothesis":  (
-                    f"Sales reps at {co} are likely losing 2–3 hours per day to manual account "
-                    f"research, quietly eroding pipeline capacity and compressing close rates."
-                ),
-                "headline":         f"Recovering {co}'s $1.2M Annual Pipeline Gap",
-                "exec_body":        (
-                    (f"Following '{sig[:55]}', " if sig else f"{co} faces a challenge common across high-growth teams: ")
-                    + f"manual research overhead is silently compressing pipeline velocity. "
-                    f"Each rep spending 2.5 hours daily on prep — at a 20-rep scale with $45K ACV "
-                    f"and 22% close rate — represents over $1.2M in unworked annual pipeline. "
-                    f"{product} eliminates this entirely, delivering full account intelligence in under 90 seconds."
-                ),
-                "roi_calculation":  (
-                    f"Assuming a 20-rep team at {co}, $45K ACV, and 22% close rate: "
-                    f"recovering 2.5 hours of daily research overhead per rep yields 3+ additional "
-                    f"qualified calls per rep per week — $1.25M in incremental annual pipeline. "
-                    f"Comparable deployments at Gong and Salesloft showed full ROI recovery within 11 weeks."
-                ),
-                "email_subject":    f"The $1.2M pipeline gap hiding in {co}'s process",
-                "email_body":       (
-                    (f"I came across '{sig[:55]}' — " if sig else f"Looking at {co}'s growth trajectory — ")
-                    + f"it's clear the team is scaling fast, which usually means research overhead "
-                    f"starts quietly compressing pipeline capacity.\n\n"
-                    f"Most enterprise teams at your stage lose 2–3 hours per rep daily to manual prep — "
-                    f"at scale, that's $1M+ in pipeline that never gets touched. "
-                    f"{product} closes that gap to under 90 seconds per account.\n\n"
-                    f"Salesforce's commercial org reported a 31% lift in qualified meetings within 60 days.\n\n"
-                    f"Would a focused 20-minute walkthrough make sense this week?"
-                ),
+            LP = {
+                "usa":     dict(lang="English",             persona="a top SaaS enterprise AE in San Francisco",                       tone="Direct, punchy, ROI-first. Short sentences.",              jargon="pipeline, win rate, ACV, ICP, quota",              greeting="",                        taboo="Never say 'I hope this email finds you well'."),
+                "japan":   dict(lang="Japanese",             persona="a senior enterprise consultant at a top Japanese firm",            tone="Extremely formal keigo. Trust-first. Long-term focus.",    jargon="稟議, 御社, 弊社, 課題解決, 導入実績, 効率化",        greeting="いつもお世話になっております。", taboo="Never be pushy. Always use formal opener."),
+                "germany": dict(lang="German",               persona="a senior B2B sales director at a German enterprise software firm",  tone="Precise, data-heavy, logical. No hyperbole.",             jargon="Effizienzsteigerung, ROI, Digitalisierung",         greeting="Sehr geehrte Damen und Herren,", taboo="Never use superlatives without data."),
+                "korea":   dict(lang="Korean",               persona="a top B2B sales manager at a leading Korean tech company",          tone="Professional, warm. Use 존댓말. Reference Korean cases.",  jargon="영업 효율화, POC, 도입 사례, ROI, 비용 절감",          greeting="안녕하세요.",             taboo="Never use informal speech."),
+                "china":   dict(lang="Simplified Chinese",   persona="a senior B2B director with enterprise ties in China",              tone="Relationship-first. Mutual benefit. Emphasize scale.",    jargon="数字化转型, 降本增效, 合作伙伴, 赋能, ROI",             greeting="您好，",                  taboo="Never use hard-sell tactics."),
+                "uk":      dict(lang="English (UK)",         persona="a senior enterprise AE at a London B2B SaaS firm",                 tone="Understated, dry wit, professional.",                     jargon="pipeline, ROI, procurement, cost-benefit",          greeting="",                        taboo="Never over-hype."),
+                "sea":     dict(lang="English",              persona="a regional B2B director for SE Asia",                              tone="Warm, relationship-aware, cost-focused.",                 jargon="ROI, cost savings, digital transformation",         greeting="",                        taboo="Never ignore relationships."),
+                "uae":     dict(lang="English",              persona="a senior B2B consultant for C-suite in UAE/GCC",                   tone="Formal, prestige-aware. Reference Vision 2030.",          jargon="strategic partnership, ROI, Vision 2030",           greeting="",                        taboo="Never pressure for quick decisions."),
+                "france":  dict(lang="French",               persona="un directeur commercial senior dans une entreprise B2B française",  tone="Élégant, structuré, rigoureux.",                         jargon="transformation digitale, ROI, efficacité",          greeting="Madame, Monsieur,",       taboo="Évitez la familiarité."),
+                "brazil":  dict(lang="Brazilian Portuguese", persona="um diretor de vendas B2B sênior no mercado brasileiro",             tone="Warm, relationship-driven, professional.",                jargon="ROI, pipeline, transformação digital",              greeting="Prezado(a),",             taboo="Nunca seja muito frio."),
             }
+            lp = LP.get(country, LP["usa"])
 
-        prog_bar.progress(90, text="마무리 중…")
-        add_log("→ Building proposal package...", "run")
-        time.sleep(0.4)
+            st.write(f"✅ 출력 언어: **{lp['lang']}**")
+            st.write(f"✅ 영업 페르소나: {lp['persona'][:60]}…")
+            st.write(f"✅ 커뮤니케이션 스타일: {lp['tone'][:60]}…")
+            time.sleep(0.3)
+            s2.update(label="**2단계** — 전략 매핑 완료 ✓", state="complete", expanded=False)
+
+        # ── STEP 3: 최종 제안서 작성 ────────────────────────────
+        with st.status("**3단계** — 최종 제안서 작성 중…", expanded=True) as s3:
+            st.write(f"✍️ GPT-4o-mini ({lp['lang']}) 제안서 생성 중…")
+            prog_ph.progress(75, text="AI 제안서 작성 중…")
+
+            signals_text = ""
+            for i, sg in enumerate(research.get("signals", []), 1):
+                # UTF-8 안전 처리
+                t = sg["title"].encode("utf-8", errors="replace").decode("utf-8")
+                s = sg["snippet"].encode("utf-8", errors="replace").decode("utf-8")
+                signals_text += f"[Signal {i}] {t}\n{s}\n\n"
+
+            MSYS = (
+                f"You are {lp['persona']}, also a McKinsey-trained B2B strategist.\n"
+                f"OUTPUT LANGUAGE: {lp['lang']} — translate ALL inputs to {lp['lang']}.\n"
+                f"TONE: {lp['tone']}  JARGON: {lp['jargon']}\n"
+                f"GREETING: {lp['greeting'] or 'No greeting — sharp insight only.'}\n"
+                f"RULES: Use real signals. Show ROI math. Real company names only. "
+                f"Zero templates. {lp['taboo']}\n"
+                f"Output ONLY valid JSON. No markdown."
+            )
+            MUSR = (
+                f"Write the best B2B proposal for this buyer in {lp['lang']}.\n"
+                f"BUYER: {domain} ({co_name})\n"
+                f"SIGNALS:\n{signals_text.strip() or 'none — use domain knowledge of ' + domain}\n\n"
+                f"8 fields ALL in {lp['lang']}:\n"
+                f"1.company_tone: conservative|innovative\n"
+                f"2.company_summary: 2 sentences, strategic moment\n"
+                f"3.pain_hypothesis: 1 sentence, #1 pain NOW\n"
+                f"4.headline: max 52 chars, outcome-led\n"
+                f"5.exec_body: 3 sentences — signal insight, cost of inaction, solution\n"
+                f"6.roi_calculation: 2 sentences with real math + proof company\n"
+                f"7.email_subject: max 48 chars, curiosity-driven\n"
+                f"8.email_body: {lp['greeting'] or 'sharp observation'} then pain, proof, soft CTA\n\n"
+                + '{"company_tone":"...","company_summary":"...","pain_hypothesis":"...","headline":"...","exec_body":"...","roi_calculation":"...","email_subject":"...","email_body":"..."}'
+            )
+
+            openai_key = st.secrets.get("OPENAI_API_KEY", "")
+            if openai_key:
+                try:
+                    from openai import OpenAI
+                    oai = OpenAI(api_key=openai_key)
+                    resp = oai.chat.completions.create(
+                        model="gpt-4o-mini",
+                        temperature=0.70,
+                        max_tokens=1400,
+                        messages=[
+                            {"role": "system", "content": MSYS},
+                            {"role": "user",   "content": MUSR},
+                        ],
+                    )
+                    raw = resp.choices[0].message.content
+                    # UTF-8 안전 처리
+                    raw = raw.encode("utf-8", errors="replace").decode("utf-8")
+                    cleaned = _re.sub(r"```(?:json)?|```", "", raw).strip()
+                    m = _re.search(r"\{.*\}", cleaned, _re.DOTALL)
+                    if m:
+                        copy = json.loads(m.group())
+                        st.write(f"✅ {lp['lang']} 제안서 생성 완료")
+                    else:
+                        st.write("⚠️ 파싱 오류 — 스마트 폴백 적용")
+                except Exception as e:
+                    err_msg = str(e).encode("utf-8", errors="replace").decode("utf-8")
+                    st.write(f"⚠️ OpenAI 오류: {err_msg[:80]} — 폴백 적용")
+            else:
+                st.write("ℹ️ OPENAI_API_KEY 미설정 — 스마트 폴백 적용")
+
+            # 스마트 폴백
+            if not copy:
+                sig = research.get("signals", [{}])[0].get("title", "") if research.get("signals") else ""
+                copy = {
+                    "company_tone":    "innovative",
+                    "company_summary": (
+                        f"{co_name} is navigating a pivotal growth phase where operational "
+                        f"efficiency has become a strategic priority. "
+                        + (f"Recent signals including '{sig[:55]}' indicate " if sig else "They are actively investing in ")
+                        + "scaling their revenue engine while managing rising costs."
+                    ),
+                    "pain_hypothesis": (
+                        f"Sales teams at {co_name} are likely spending 60%+ of their time on "
+                        f"manual research rather than high-value selling activities."
+                    ),
+                    "headline":         f"Closing {co_name}'s $1.2M Annual Pipeline Gap",
+                    "exec_body":        (
+                        (f"Following '{sig[:50]}', " if sig else f"{co_name} ")
+                        + f"faces a challenge common at this growth stage: reps spend 2–3 hours daily "
+                        f"on manual prep, silently eroding pipeline capacity. "
+                        f"At a 20-rep scale with $45K ACV and 22% close rate, this represents "
+                        f"over $1.2M in annual unworked pipeline. "
+                        f"Our platform eliminates that bottleneck in under 90 seconds per account."
+                    ),
+                    "roi_calculation":  (
+                        f"Assuming a 20-rep team at {co_name}, $45K ACV, and 22% close rate: "
+                        f"recovering 2.5 hours of daily research overhead per rep yields "
+                        f"$1.25M in incremental annual pipeline. "
+                        f"Comparable deployments at Gong and Salesloft showed full ROI within 11 weeks."
+                    ),
+                    "email_subject":    f"{co_name}'s $1.2M pipeline gap — quick insight",
+                    "email_body":       (
+                        (f"I came across '{sig[:50]}' — " if sig else f"Looking at {co_name}'s trajectory — ")
+                        + f"it's clear the team is scaling fast, which usually surfaces a "
+                        f"quiet productivity drain: 2–3 hours of manual research per rep per day.\n\n"
+                        f"Our platform compresses that to 90 seconds per account — "
+                        f"teams your size report $1M+ in recovered pipeline within one quarter.\n\n"
+                        f"Salesforce's commercial org saw a 31% lift in qualified meetings within 60 days.\n\n"
+                        f"Would a 20-minute walkthrough make sense this week?"
+                    ),
+                }
+
+            prog_ph.progress(100, text="완료!")
+            s3.update(label="**3단계** — 제안서 작성 완료 ✓", state="complete", expanded=False)
 
         # 결과 저장
         st.session_state.research_data = research
@@ -592,215 +592,279 @@ footer                          { display: none !important; }
             "email_body":       copy.get("email_body",      ""),
         }
 
-        prog_bar.progress(100, text="완료!")
-        add_log("✓ Proposal package ready", "ok")
-        add_log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "dim")
         time.sleep(0.5)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("✦  제안서 확인 & 편집하기", use_container_width=True):
-            st.session_state.page = "editor"
-            st.rerun()
+        _, bcol, _ = st.columns([1, 2, 1])
+        with bcol:
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+            if st.button("✦  대시보드 열기", use_container_width=True):
+                st.session_state.page = "editor"
+                st.rerun()
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    #  PAGE 3 — EDITOR
+    #  PAGE 3 — EDITOR (2-컬럼 대시보드)
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif st.session_state.page == "editor":
 
-        ac      = st.session_state.get("ai_copy", {})
-        product = ac.get("product",  "")
-        company = ac.get("company",  "")
-        domain  = ac.get("domain",   company)
+        ac           = st.session_state.get("ai_copy", {})
+        product      = ac.get("product",     "")
+        company      = ac.get("company",     "")
+        domain       = ac.get("domain",      company)
+        country_label= ac.get("country_label","")
+        output_lang  = ac.get("output_lang", "English")
+        tone         = ac.get("company_tone","innovative")
+        signals      = st.session_state.research_data.get("signals", [])
 
-        # 상단 네비
-        col_back, col_title, col_space = st.columns([1, 4, 1])
-        with col_back:
-            if st.button("← 처음"):
+        # ── 상단 헤더 바 ─────────────────────────────────────────
+        hc1, hc2, hc3 = st.columns([3, 4, 3])
+        with hc1:
+            if st.button("← 처음으로"):
                 st.session_state.page = "landing"
                 st.rerun()
-        with col_title:
+        with hc2:
+            tone_color = "#6366f1" if tone == "innovative" else "#0f2044"
+            tone_bg    = "#eef2ff" if tone == "innovative" else "#f0f4ff"
+            tone_label = "🚀 혁신형 기업" if tone == "innovative" else "🏛 보수형 기업"
             st.markdown(
-                f"<div style='text-align:center;padding:6px 0'>"
-                f"<span style='font-size:13px;font-weight:600;color:#6b7280'>"
-                f"✦ {domain} 제안서</span></div>",
+                f"<div style='text-align:center;padding:4px 0'>"
+                f"<span style='font-size:13px;font-weight:700;color:#111827'>"
+                f"{domain}</span>"
+                f"<span style='font-size:11px;background:{tone_bg};color:{tone_color};"
+                f"padding:2px 10px;border-radius:100px;margin-left:8px;font-weight:600'>"
+                f"{tone_label}</span>"
+                f"<span style='font-size:11px;color:#9ca3af;margin-left:8px'>{country_label}</span>"
+                f"</div>",
                 unsafe_allow_html=True,
             )
 
-        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-        # 인텔리전스 카드 (수집된 신호)
-        signals = st.session_state.research_data.get("signals", [])
-        if signals:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
+        # ── 2-컬럼 대시보드 ──────────────────────────────────────
+        left_col, right_col = st.columns([1, 1.3], gap="large")
+
+        # ╔══════════════════════════════════════╗
+        # ║  왼쪽: AI 인사이트 요약              ║
+        # ╚══════════════════════════════════════╝
+        with left_col:
             st.markdown("""
-<p style="font-size:11px;font-weight:700;letter-spacing:.8px;
-   text-transform:uppercase;color:#6366f1;margin-bottom:14px">
-  ✦ Live Intelligence
-</p>
+<p style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+   color:#6366f1;margin-bottom:12px">✦ AI 인사이트 요약</p>
 """, unsafe_allow_html=True)
-            for s in signals[:3]:
-                st.markdown(
-                    f"<div style='padding:10px 0;border-bottom:1px solid #f9fafb'>"
-                    f"<div style='font-size:13px;font-weight:600;color:#111827;"
-                    f"line-height:1.4;margin-bottom:3px'>{s['title']}</div>"
-                    f"<div style='font-size:12px;color:#9ca3af;line-height:1.5'>"
-                    f"{s['snippet'][:120]}…</div></div>",
-                    unsafe_allow_html=True,
-                )
+
+            # 기업 요약 카드
             if ac.get("company_summary"):
                 st.markdown(
-                    f"<div style='margin-top:14px;padding:12px 14px;"
-                    f"background:#f9fafb;border-radius:10px;font-size:13px;"
-                    f"color:#374151;line-height:1.6'>"
-                    f"<strong>AI 분석:</strong> {ac['company_summary']}</div>",
+                    f'<div class="card-sm card-indigo">'
+                    f'<p style="font-size:11px;font-weight:700;color:#4338ca;'
+                    f'text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">'
+                    f'🏢 기업 현황 분석</p>'
+                    f'<p style="font-size:13px;color:#1e1b4b;line-height:1.65">'
+                    f'{ac["company_summary"]}</p></div>',
                     unsafe_allow_html=True,
                 )
-            st.markdown('</div>', unsafe_allow_html=True)
 
-        # 편집 탭
-        tab_copy, tab_email, tab_send = st.tabs(["📄 제안서 카피", "✉ 이메일", "🚀 발송"])
-
-        with tab_copy:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-
-            bname = st.text_input("담당자 이름", ac.get("buyer_name", ""), placeholder="예: Kim Minsu")
-            brole = st.text_input("담당자 직책", ac.get("buyer_role", ""), placeholder="예: VP Sales")
-
-            st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-            headline  = st.text_input("헤드라인", ac.get("headline", ""))
-            exec_body = st.text_area("Executive Summary", ac.get("exec_body", ""), height=110)
-            roi_sum   = st.text_area("ROI 요약", ac.get("roi_summary", ""), height=68)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            if st.button("✦  PDF 생성 + 9단계 검수", use_container_width=True):
-                from engine.agents.designer import (
-                    DesignerAgent, DesignPayload,
-                    DEFAULT_PAIN, DEFAULT_FEATURES, DEFAULT_ROI,
-                    DEFAULT_ROADMAP, _default_refs,
-                )
-                from engine.agents.visualizer import VisualizerAgent, ChartType, BuyerFocus
-                from engine.agents.proofreader import ProofreaderAgent, Locale, Role
-
-                prog = st.progress(0, text="차트 생성 중…")
-                Path("temp").mkdir(exist_ok=True)
-                viz   = VisualizerAgent(temp_dir="temp")
-                chart = viz.generate(ChartType.RADAR, company, BuyerFocus.SALES_IMPACT, product)
-                prog.progress(35, text="PDF 렌더링 중…")
-
-                payload = DesignPayload(
-                    product_name=product, buyer_company=company,
-                    buyer_name=bname, buyer_role=brole,
-                    exec_headline=headline, exec_body=exec_body,
-                    roi_summary=roi_sum, chart_paths=[chart],
-                    pain_points=DEFAULT_PAIN[:3], features=DEFAULT_FEATURES[:3],
-                    roi_rows=DEFAULT_ROI, roadmap=DEFAULT_ROADMAP,
-                    references=_default_refs("SaaS"),
-                    kpis=[("73%","Research Saved",""),
-                          ("+28%","Win Rate",""), ("90s","Brief","")],
-                )
-                pdf_path = DesignerAgent("temp").generate(payload)
-                prog.progress(75, text="Proofreader 검수 중…")
-
-                email_body_val = ac.get("email_body", "")
-                pr    = ProofreaderAgent()
-                proof = pr.quick_check(email_body_val, Locale.USA, Role.VP_SALES)
-                prog.progress(100, text="완료!"); time.sleep(0.2); prog.empty()
-
-                st.session_state.update({
-                    "pdf_path":   pdf_path,
-                    "proof":      proof,
-                    "bname":      bname,
-                    "brole":      brole,
-                    "headline":   headline,
-                    "exec_body":  exec_body,
-                    "roi_sum":    roi_sum,
-                })
-
-                # 검수 결과
-                p  = proof
-                sc = p["score"]
-                m1, m2, m3 = st.columns(3)
-                m1.metric("검수 점수", f"{sc:.0%}", "🟢" if sc>=.9 else "🟡" if sc>=.7 else "🔴")
-                m2.metric("이슈", p["issues"], "건")
-                m3.metric("Error", p["errors"], "건")
-
-                with open(pdf_path, "rb") as f:
-                    st.download_button(
-                        "⬇  PDF 다운로드",
-                        data=f.read(),
-                        file_name=f"{company}_proposal.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                    )
-                st.success(f"✅ PDF 생성 완료 ({os.path.getsize(pdf_path)//1024}KB)")
-
-        with tab_email:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            email_subj = st.text_input("이메일 제목", ac.get("email_subject", ""))
-            email_body = st.text_area("이메일 본문", ac.get("email_body", ""), height=220)
-            st.markdown('</div>', unsafe_allow_html=True)
-            st.session_state.ai_copy["email_subject"] = email_subj
-            st.session_state.ai_copy["email_body"]    = email_body
-
-        with tab_send:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            sg_key   = st.text_input("SendGrid API Key", type="password",
-                                      placeholder="SG.xxxx…",
-                                      value=st.secrets.get("SENDGRID_API_KEY",""))
-            to_email = st.text_input("수신 이메일", placeholder="buyer@company.com")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            checks = [
-                ("PDF 생성",         "pdf_path" in st.session_state),
-                ("이메일 본문",       bool(ac.get("email_body"))),
-                ("이메일 제목",       bool(ac.get("email_subject"))),
-                ("SendGrid API Key", bool(sg_key and sg_key.startswith("SG."))),
-                ("수신 이메일",       bool(to_email and "@" in to_email)),
-            ]
-            all_ok = all(v for _, v in checks)
-
-            for lbl, ok in checks:
-                color = "#111827" if ok else "#d1d5db"
-                icon  = "✓" if ok else "○"
+            # 핵심 페인포인트 카드
+            if ac.get("pain_hypothesis"):
                 st.markdown(
-                    f"<div style='font-size:14px;color:{color};padding:4px 0;"
-                    f"font-weight:{'600' if ok else '400'}'>"
-                    f"{icon}  {lbl}</div>",
+                    f'<div class="card-sm card-amber">'
+                    f'<p style="font-size:11px;font-weight:700;color:#b45309;'
+                    f'text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">'
+                    f'⚡ 핵심 페인포인트</p>'
+                    f'<p style="font-size:13px;color:#451a03;line-height:1.65">'
+                    f'{ac["pain_hypothesis"]}</p></div>',
                     unsafe_allow_html=True,
                 )
 
-            st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
-            send_btn = st.button("📨  지금 발송하기",
-                                  use_container_width=True,
-                                  disabled=not all_ok)
+            # ROI 계산 카드
+            if ac.get("roi_summary"):
+                st.markdown(
+                    f'<div class="card-sm card-green">'
+                    f'<p style="font-size:11px;font-weight:700;color:#166534;'
+                    f'text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">'
+                    f'💰 ROI 계산</p>'
+                    f'<p style="font-size:13px;color:#14532d;line-height:1.65">'
+                    f'{ac["roi_summary"]}</p></div>',
+                    unsafe_allow_html=True,
+                )
 
-            if send_btn and all_ok:
-                with st.spinner("발송 중…"):
+            # Live Intelligence 신호
+            if signals:
+                st.markdown("""
+<p style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+   color:#6b7280;margin:16px 0 10px">📡 수집된 인텔리전스</p>
+""", unsafe_allow_html=True)
+                for sg in signals[:3]:
+                    title   = sg.get("title",   "")[:70]
+                    snippet = sg.get("snippet", "")[:100]
+                    src_url = sg.get("url", "")
+                    domain_short = _re.sub(r"https?://(www\.)?","",src_url).split("/")[0][:30] if src_url else ""
+                    st.markdown(
+                        f'<div class="card-sm card-slate" style="margin-bottom:8px">'
+                        f'<p style="font-size:12px;font-weight:600;color:#111827;'
+                        f'line-height:1.4;margin-bottom:4px">{title}</p>'
+                        f'<p style="font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:5px">'
+                        f'{snippet}…</p>'
+                        f'<span class="tag-pill-gray tag-pill">{domain_short}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+
+            # 언어 & 전략 태그
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+            tags_html = (
+                f'<span class="tag-pill">{output_lang}</span>'
+                f'<span class="tag-pill-green tag-pill">{tone_label}</span>'
+                f'<span class="tag-pill-amber tag-pill">McKinsey 프롬프트</span>'
+                f'<span class="tag-pill-gray tag-pill">Tavily 리서치</span>'
+            )
+            st.markdown(tags_html, unsafe_allow_html=True)
+
+        # ╔══════════════════════════════════════╗
+        # ║  오른쪽: 제안서 편집 + PDF + 발송    ║
+        # ╚══════════════════════════════════════╝
+        with right_col:
+            st.markdown("""
+<p style="font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+   color:#111827;margin-bottom:12px">📄 제안서 편집 & 발송</p>
+""", unsafe_allow_html=True)
+
+            tab_proposal, tab_email, tab_send = st.tabs(
+                ["제안서 카피", "이메일", "발송"])
+
+            with tab_proposal:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+
+                c1, c2 = st.columns(2)
+                with c1:
+                    bname = st.text_input("담당자 이름",
+                        ac.get("buyer_name",""), placeholder="예: Kim Minsu")
+                with c2:
+                    brole = st.text_input("직책",
+                        ac.get("buyer_role",""), placeholder="예: VP Sales")
+
+                headline  = st.text_input("헤드라인", ac.get("headline",""))
+                exec_body = st.text_area("Executive Summary",
+                    ac.get("exec_body",""), height=100)
+                roi_sum   = st.text_area("ROI 요약", ac.get("roi_summary",""), height=72)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                if st.button("✦  PDF 생성 + 9단계 검수", use_container_width=True, type="primary"):
                     try:
-                        import sendgrid as sg_lib
-                        from sendgrid.helpers.mail import (
-                            Mail, Attachment, FileContent,
-                            FileName, FileType, Disposition,
+                        from engine.agents.designer import (
+                            DesignerAgent, DesignPayload,
+                            DEFAULT_PAIN, DEFAULT_FEATURES, DEFAULT_ROI,
+                            DEFAULT_ROADMAP, _default_refs,
                         )
-                        with open(st.session_state["pdf_path"], "rb") as f:
-                            pdf_data = f.read()
-                        msg = Mail(
-                            from_email="noreply@openerai.co",
-                            to_emails=to_email,
-                            subject=ac.get("email_subject",""),
-                            html_content=ac.get("email_body","").replace("\n","<br>"),
-                        )
-                        msg.attachment = Attachment(
-                            FileContent(base64.b64encode(pdf_data).decode()),
-                            FileName(f"{company}_proposal.pdf"),
-                            FileType("application/pdf"),
-                            Disposition("attachment"),
-                        )
-                        sg_lib.SendGridAPIClient(api_key=sg_key).send(msg)
-                        st.balloons()
-                        st.success(f"🎉 발송 완료! → {to_email}")
+                        from engine.agents.visualizer import VisualizerAgent, ChartType, BuyerFocus
+                        from engine.agents.proofreader import ProofreaderAgent, Locale, Role
+
+                        with st.spinner("차트 + PDF 생성 중…"):
+                            Path("temp").mkdir(exist_ok=True)
+                            viz    = VisualizerAgent(temp_dir="temp")
+                            chart  = viz.generate(ChartType.RADAR, company,
+                                                   BuyerFocus.SALES_IMPACT, "OpenerAI")
+                            payload = DesignPayload(
+                                product_name="OpenerAI", buyer_company=company,
+                                buyer_name=bname, buyer_role=brole,
+                                exec_headline=headline, exec_body=exec_body,
+                                roi_summary=roi_sum, chart_paths=[chart],
+                                pain_points=DEFAULT_PAIN[:3], features=DEFAULT_FEATURES[:3],
+                                roi_rows=DEFAULT_ROI, roadmap=DEFAULT_ROADMAP,
+                                references=_default_refs("SaaS"),
+                                kpis=[("+10.2%","Win Rate",""), ("10분","제안서",""), ("10개국","현지화","")],
+                            )
+                            pdf_path = DesignerAgent("temp").generate(payload)
+
+                        with st.spinner("Proofreader 검수 중…"):
+                            pr    = ProofreaderAgent()
+                            proof = pr.quick_check(exec_body, Locale.USA, Role.VP_SALES)
+
+                        st.session_state["pdf_path"]  = pdf_path
+                        st.session_state["proof"]     = proof
+                        st.session_state["email_subj"]= ac.get("email_subject","")
+                        st.session_state["email_body"]= ac.get("email_body","")
+
+                        sc = proof["score"]
+                        m1, m2, m3 = st.columns(3)
+                        m1.metric("검수 점수", f"{sc:.0%}",
+                                  "🟢" if sc>=.9 else "🟡" if sc>=.7 else "🔴")
+                        m2.metric("이슈", proof["issues"], "건")
+                        m3.metric("Error", proof["errors"], "건")
+
+                        with open(pdf_path, "rb") as f:
+                            st.download_button(
+                                "⬇  PDF 다운로드", data=f.read(),
+                                file_name=f"{company}_proposal.pdf",
+                                mime="application/pdf", use_container_width=True,
+                            )
+                        st.success(f"✅ {os.path.getsize(pdf_path)//1024}KB PDF 생성 완료")
                     except Exception as e:
-                        st.error(f"발송 실패: {str(e)[:150]}")
+                        st.error(f"PDF 생성 오류: {str(e)[:120]}")
+
+            with tab_email:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+                email_subj = st.text_input("이메일 제목", ac.get("email_subject",""))
+                email_body = st.text_area("이메일 본문", ac.get("email_body",""), height=220)
+                st.markdown('</div>', unsafe_allow_html=True)
+                st.session_state.ai_copy["email_subject"] = email_subj
+                st.session_state.ai_copy["email_body"]    = email_body
+
+            with tab_send:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+                sg_key   = st.text_input("SendGrid API Key", type="password",
+                    placeholder="SG.xxxx…",
+                    value=st.secrets.get("SENDGRID_API_KEY",""))
+                to_email = st.text_input("수신 이메일", placeholder="buyer@company.com")
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                checks = [
+                    ("PDF 생성",         "pdf_path" in st.session_state),
+                    ("이메일 본문",       bool(ac.get("email_body"))),
+                    ("SendGrid Key",    bool(sg_key and sg_key.startswith("SG."))),
+                    ("수신 이메일",       bool(to_email and "@" in to_email)),
+                ]
+                all_ok = all(v for _, v in checks)
+
+                for lbl, ok in checks:
+                    color  = "#111827" if ok else "#d1d5db"
+                    weight = "600" if ok else "400"
+                    icon   = "✓" if ok else "○"
+                    st.markdown(
+                        f"<div style='font-size:13px;color:{color};"
+                        f"font-weight:{weight};padding:3px 0'>{icon}  {lbl}</div>",
+                        unsafe_allow_html=True,
+                    )
+
+                st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+                send_btn = st.button("📨  지금 발송하기",
+                                      use_container_width=True, disabled=not all_ok)
+
+                if send_btn and all_ok:
+                    with st.spinner("SendGrid 발송 중…"):
+                        try:
+                            import sendgrid as sg_lib
+                            from sendgrid.helpers.mail import (
+                                Mail, Attachment, FileContent,
+                                FileName, FileType, Disposition,
+                            )
+                            with open(st.session_state["pdf_path"], "rb") as f:
+                                pdf_data = f.read()
+                            msg = Mail(
+                                from_email="noreply@openerai.co",
+                                to_emails=to_email,
+                                subject=ac.get("email_subject",""),
+                                html_content=ac.get("email_body","").replace("\n","<br>"),
+                            )
+                            msg.attachment = Attachment(
+                                FileContent(base64.b64encode(pdf_data).decode()),
+                                FileName(f"{company}_proposal.pdf"),
+                                FileType("application/pdf"),
+                                Disposition("attachment"),
+                            )
+                            sg_lib.SendGridAPIClient(api_key=sg_key).send(msg)
+                            st.balloons()
+                            st.success(f"🎉 발송 완료! → {to_email}")
+                        except Exception as e:
+                            st.error(f"발송 실패: {str(e)[:150]}")
 
 
 ###################################################################
