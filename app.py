@@ -299,9 +299,9 @@ div[data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
                     st.session_state.chat_history.append({"role": "ai", "text": "✅ 완벽해요! AI가 제안서를 생성합니다. 잠시만요 🚀"})
                 st.rerun()
 
-        # 인터뷰 완료 → Claude API로 진짜 B2B 카피 생성 → page 3
+        # 인터뷰 완료 → GPT-4o-mini로 진짜 B2B 카피 생성 → page 3
         else:
-            with st.spinner("🧠 Claude AI가 전문 B2B 영문 카피를 작성하고 있습니다…"):
+            with st.spinner("✨ GPT-4o-mini가 전문 B2B 영문 카피를 작성하고 있습니다…"):
                 a       = st.session_state.interview_answers
                 product = a.get("product_name",  "")
                 value   = a.get("value_prop",     "")
@@ -310,37 +310,48 @@ div[data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
                 brole   = a.get("buyer_role",     "")
                 pain    = a.get("pain_point",     "")
 
-                # ── Claude API 호출 (핵심 로직) ──────────────────
-                # 사용자의 한글/영어 입력을 그대로 이해하고
-                # 실리콘밸리 수준의 전문 영문 B2B 카피를 처음부터 생성
                 import re as _re
 
-                SYSTEM_PROMPT = """You are a world-class B2B SaaS sales copywriter based in San Francisco.
-You write sharp, concise, and persuasive enterprise sales copy.
-Your style: direct, data-backed, never generic.
-You NEVER use f-string fill-in templates. You ALWAYS write original, contextually intelligent copy.
-Output ONLY valid JSON, no markdown fences, no explanation."""
+                # ── 강력한 프롬프트 엔지니어링 ────────────────────
+                SYSTEM_PROMPT = """You are a world-class B2B sales copywriter who has worked at
+Salesforce, HubSpot, and top Silicon Valley startups.
 
-                USER_PROMPT = f"""The user gave you this raw input (may be Korean or English — understand both):
+Your expertise:
+- You understand ANY language input (Korean, English, Japanese, etc.) and produce
+  ONLY flawless, native-level American B2B English output.
+- You NEVER do mechanical substitution (no "Why [Korean text] Needs [Korean text]").
+- You ALWAYS interpret the user's intent, translate concepts, and craft original copy.
+- Your copy is sharp, specific, insight-led, and conversion-optimized.
+- You write like the best SDR at a YC startup — direct, warm, data-backed.
 
-- Product/Service: {product}
-- Core Value Proposition: {value}
-- Target Company: {company}
-- Target Contact Name: {bname}
-- Target Contact Role: {brole}
-- Target's Pain Point: {pain}
+Output ONLY valid JSON. No markdown. No explanation. No extra text."""
 
-Now generate world-class B2B sales copy. Rules:
-1. ALL output must be in ENGLISH (professional American business English)
-2. NEVER mechanically insert the raw input text — UNDERSTAND it and rewrite intelligently
-3. headline: ≤55 chars, punchy, outcome-focused (NOT "Why X Needs Y" template)
-4. exec_body: 2–3 sentences, specific to their pain, leads with insight
-5. roi_summary: 1 sentence with a concrete number/metric
-6. email_subject: ≤50 chars, curiosity-driven, personalized to their situation
-7. email_body: 3–4 sentences, opens with a sharp insight about their company/pain,
-   ends with a soft CTA. NO "I hope this email finds you well."
+                USER_PROMPT = f"""A user provided the following product/buyer info in mixed Korean/English.
+Your job: fully understand the meaning, then write polished B2B English sales copy from scratch.
 
-Respond with ONLY this JSON:
+=== USER INPUT ===
+Product or Service Name : {product}
+What it does (value prop): {value}
+Target Buyer's Company  : {company}
+Target Contact's Name   : {bname}
+Target Contact's Role   : {brole}
+Target's Current Problem: {pain}
+
+=== YOUR TASK ===
+Produce ORIGINAL copy — do NOT mechanically paste the input into templates.
+Instead, UNDERSTAND the context and WRITE like a native English sales professional.
+
+Rules:
+- headline      : ≤55 chars. Punchy. Outcome-focused. Never "Why X Needs Y".
+- exec_body     : 2–3 sentences. Lead with a sharp insight about their pain.
+                  Make it feel like you researched their company.
+- roi_summary   : 1 sentence. Must contain a specific metric or dollar figure.
+- email_subject : ≤50 chars. Curiosity-driven. Feels personal, not mass-blast.
+- email_body    : 3–4 sentences. Open with an observation about their business,
+                  NOT "I hope this email finds you well."
+                  Close with a low-pressure CTA.
+
+Respond with ONLY this JSON (no markdown fences):
 {{
   "headline": "...",
   "exec_body": "...",
@@ -350,62 +361,65 @@ Respond with ONLY this JSON:
 }}"""
 
                 copy = {}
-                api_key = os.environ.get("ANTHROPIC_API_KEY", "")
 
-                if api_key:
-                    try:
-                        import anthropic
-                        client = anthropic.Anthropic(api_key=api_key)
-                        resp = client.messages.create(
-                            model="claude-sonnet-4-20250514",
+                # ── OpenAI API 호출 (st.secrets 방식) ────────────
+                try:
+                    openai_key = st.secrets.get("OPENAI_API_KEY", "")
+                    if openai_key:
+                        from openai import OpenAI
+                        client = OpenAI(api_key=openai_key)
+                        resp = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            temperature=0.75,
                             max_tokens=900,
-                            system=SYSTEM_PROMPT,
-                            messages=[{"role": "user", "content": USER_PROMPT}],
+                            messages=[
+                                {"role": "system", "content": SYSTEM_PROMPT},
+                                {"role": "user",   "content": USER_PROMPT},
+                            ],
                         )
-                        raw = resp.content[0].text.strip()
-                        # JSON 파싱 (마크다운 펜스 제거 후)
+                        raw     = resp.choices[0].message.content.strip()
                         cleaned = _re.sub(r"```(?:json)?|```", "", raw).strip()
-                        m = _re.search(r"\{.*\}", cleaned, _re.DOTALL)
+                        m       = _re.search(r"\{.*\}", cleaned, _re.DOTALL)
                         if m:
                             copy = json.loads(m.group())
-                    except Exception as e:
-                        st.warning(f"⚠ Claude API 오류: {e}. 스마트 폴백으로 생성합니다.")
+                    else:
+                        st.info("💡 OPENAI_API_KEY가 .streamlit/secrets.toml에 없습니다. 스마트 폴백으로 생성합니다.")
+                except Exception as e:
+                    st.warning(f"⚠ OpenAI API 오류 ({e}). 스마트 폴백으로 생성합니다.")
 
-                # ── 스마트 폴백 (API 키 없을 때도 의미있는 카피 생성) ──
-                # 단순 f-string이 아닌 — 입력을 이해한 contextual 템플릿
+                # ── 스마트 폴백 ───────────────────────────────────
+                # API 키가 없거나 오류 시에도 한글이 그대로 노출되지 않도록
+                # 입력의 의미를 반영한 자연스러운 영문 카피를 생성
                 if not copy:
-                    # 제품명·기업명을 영문으로 정리 (한글 그대로 노출 방지)
-                    _prod = product or "Your Solution"
-                    _co   = company or "Your Target Company"
-                    _pain_short = (pain[:40] + "…") if len(pain) > 40 else pain
+                    _prod = product or "the platform"
+                    _co   = company or "your company"
+                    _role = brole   or "sales leader"
 
                     copy = {
                         "headline": (
-                            f"Cutting {_co}'s Research Overhead by 73% in 90 Days"
-                            if pain else
-                            f"How {_co} Can Win More Deals with Less Effort"
+                            f"Helping {_co}'s Team Close More — With Less Prep"
                         ),
                         "exec_body": (
-                            f"Sales teams at companies like {_co} lose an average of 3+ hours per "
-                            f"rep each day to manual research and CRM updates — time that should be "
-                            f"spent closing. {_prod} eliminates that bottleneck automatically, "
-                            f"giving your reps back 90% of their prep time from day one."
+                            f"High-performing sales teams at {_co} are losing 2–3 hours per rep "
+                            f"each day to manual research — time that compounds into missed pipeline. "
+                            f"{_prod} eliminates that friction, compressing deep account research "
+                            f"to under 90 seconds so your team can focus entirely on closing."
                         ),
                         "roi_summary": (
-                            f"Teams using {_prod} report a 28% lift in win rates and "
-                            f"recover $180K+ in annual productivity within the first quarter."
+                            f"Customers report a 28% increase in win rate and recover "
+                            f"$180K+ in annual productivity within the first 90 days."
                         ),
                         "email_subject": (
-                            f"{_co}'s reps losing 3hrs/day to research — here's the fix"
+                            f"{_co}'s pipeline — quick insight worth 2 minutes"
                         ),
                         "email_body": (
                             f"Hi {bname},\n\n"
-                            f"I looked at how {_co}'s sales motion is structured and "
-                            f"noticed a pattern we see at high-growth teams: reps are spending "
-                            f"more time on research than on actual selling.\n\n"
-                            f"{_prod} compresses that prep work to under 90 seconds per account. "
-                            f"Companies in your space are seeing +28% win rates within 90 days of rollout.\n\n"
-                            f"Would a 15-minute call this week make sense?"
+                            f"I noticed {_co} has been scaling its sales team — "
+                            f"which usually means research overhead starts quietly killing productivity.\n\n"
+                            f"{_prod} solves this directly: reps get a full account brief in 90 seconds, "
+                            f"not 3 hours. Teams in similar growth stages are seeing +28% win rates "
+                            f"within a quarter.\n\n"
+                            f"Open to a 15-minute look this week?"
                         ),
                     }
 
@@ -420,7 +434,7 @@ Respond with ONLY this JSON:
                     "email_subject": copy.get("email_subject", ""),
                     "email_body":    copy.get("email_body",    ""),
                 }
-                time.sleep(0.4)
+                time.sleep(0.3)
 
             st.session_state.page = "editor"
             st.rerun()

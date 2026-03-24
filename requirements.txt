@@ -1,5 +1,4 @@
-# opener-ultra-mvp · 10단계 최종 의존성
-# ─────────────────────────────────────
+# opener-ultra-mvp 전체 의존성
 # 설치: pip install -r requirements.txt
 
 # HTTP / API 서버
@@ -12,16 +11,18 @@ reportlab>=4.0.0
 matplotlib>=3.7.0
 numpy>=1.24.0
 
-# LLM (카피라이터 · Proofreader Layer 3)
+# LLM — 카피 생성 (GPT-4o-mini)
+openai>=1.30.0
+
+# LLM — Proofreader Layer 3 (선택)
 anthropic>=0.20.0
 
 # 이메일 발송
 sendgrid>=6.10.0
 
-# 리서처 (선택 — Tavily API 사용 시)
+# 리서처 (선택 — Tavily API)
 httpx>=0.24.0
 tenacity>=8.2.0
-# tavily-python>=0.3.0
 
-# Streamlit 시연 (선택)
-# streamlit>=1.35.0
+# Streamlit UI
+streamlit>=1.35.0
