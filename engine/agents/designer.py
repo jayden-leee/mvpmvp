@@ -29,8 +29,59 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas as rl_canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 W, H = A4  # 595.28 x 841.89 pt
+
+# ── 다국어 폰트 등록 (NotoSans — 한/중/일/아랍어 지원) ──────────────
+def _register_cjk_fonts() -> tuple[str, str, str]:
+    """
+    NotoSans CJK 폰트를 등록하고 (FONT, FONTB, FONTI) 를 반환.
+    폰트 파일이 없으면 Helvetica 폴백.
+    """
+    # 검색 경로: 시스템 폰트 디렉터리 + 현재 프로젝트
+    search_dirs = [
+        Path(__file__).parent.parent.parent / "fonts",   # 프로젝트 fonts/
+        Path("/usr/share/fonts"),                          # Linux 시스템
+        Path("/usr/local/share/fonts"),
+        Path("/Library/Fonts"),                            # macOS
+        Path(os.path.expanduser("~")) / "Library" / "Fonts",
+        Path("C:/Windows/Fonts"),                          # Windows
+    ]
+
+    # 후보 폰트 파일명 (NotoSans > NanumGothic > Noto CJK)
+    candidates = [
+        ("NotoSans-Regular.ttf",    "NotoSansBold.ttf",       None),
+        ("NotoSans-Regular.ttf",    "NotoSans-Bold.ttf",       None),
+        ("NanumGothic.ttf",         "NanumGothicBold.ttf",    None),
+        ("NotoSansCJK-Regular.ttc", "NotoSansCJK-Bold.ttc",   None),
+        ("NotoSansCJKkr-Regular.otf","NotoSansCJKkr-Bold.otf", None),
+        ("NotoSansJP-Regular.ttf",  "NotoSansJP-Bold.ttf",    None),
+        ("NotoSansSC-Regular.ttf",  "NotoSansSC-Bold.ttf",    None),
+    ]
+
+    for regular, bold, italic in candidates:
+        for d in search_dirs:
+            r_path = d / regular
+            b_path = d / bold
+            if r_path.exists():
+                try:
+                    pdfmetrics.registerFont(TTFont("CJKRegular", str(r_path)))
+                    if b_path.exists():
+                        pdfmetrics.registerFont(TTFont("CJKBold", str(b_path)))
+                    else:
+                        pdfmetrics.registerFont(TTFont("CJKBold", str(r_path)))
+                    pdfmetrics.registerFont(TTFont("CJKItalic", str(r_path)))
+                    return "CJKRegular", "CJKBold", "CJKItalic"
+                except Exception:
+                    continue
+
+    # 폴백: Helvetica
+    return "Helvetica", "Helvetica-Bold", "Helvetica-Oblique"
+
+
+_FONT, _FONTB, _FONTI = _register_cjk_fonts()
 
 # ── Palette ──────────────────────────────────────────────────────
 class C:
@@ -52,9 +103,9 @@ class C:
     TEAL        = colors.HexColor("#2C7A7B")
     TEAL_LIGHT  = colors.HexColor("#E6FFFA")
 
-FONT    = "Helvetica"
-FONTB   = "Helvetica-Bold"
-FONTI   = "Helvetica-Oblique"
+FONT    = _FONT
+FONTB   = _FONTB
+FONTI   = _FONTI
 M       = 36 * mm
 M_TOP   = 28 * mm
 SAFE_W  = W - M * 2

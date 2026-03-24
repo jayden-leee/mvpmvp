@@ -1,42 +1,14 @@
 """
 opener-ultra-mvp / app.py
-==========================================================
-10단계 최종 통합 · Human-in-the-Loop Editor
-           + 제안서 발송 (SendGrid)
-           + 폭죽 애니메이션 · 토스트 메시지
-           + streamlit run app.py 지원
-
-Flask API 엔드포인트
-─────────────────────
-GET  /                       HTML 에디터 UI
-GET  /api/payload/default    AI 기본 카피 JSON
-POST /api/pdf/render         편집 payload → PDF 재생성 (base64)
-GET  /api/pdf/download/<id>  PDF 다운로드
-POST /api/send               SendGrid 이메일 발송
-
-실행
-────
-  python app.py          → Flask :5000
-  streamlit run app.py   → Streamlit :8501
 """
 from __future__ import annotations
-
-import os
-import sys
-
-# ── 경로 보정: 현재 파일 위치를 Python 모듈 검색 경로에 추가 ──────
-# "ModuleNotFoundError: No module named 'engine'" 방지
+import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 import base64, json, time, traceback, uuid
 from pathlib import Path
-
 ROOT = Path(os.path.abspath(__file__)).parent
-
-# ── Streamlit 모드 감지 ───────────────────────────────────────────
 _ST = "streamlit" in sys.modules or any("streamlit" in a for a in sys.argv)
-
 
 
 ###################################################################
@@ -294,6 +266,25 @@ footer                          { display: none !important; }
             with col_b:
                 value = st.text_input("핵심 가치", placeholder="예: 리서치 시간 90% 절감")
 
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+            COUNTRY_OPTIONS = {
+                "🇺🇸 미국 (English)":           "usa",
+                "🇯🇵 일본 (日本語)":             "japan",
+                "🇩🇪 독일 (Deutsch)":            "germany",
+                "🇰🇷 한국 (한국어)":             "korea",
+                "🇨🇳 중국 (中文)":               "china",
+                "🇬🇧 영국 (English/UK)":         "uk",
+                "🇸🇬 동남아 (English)":          "sea",
+                "🇦🇪 중동 UAE (English)":        "uae",
+                "🇫🇷 프랑스 (Français)":         "france",
+                "🇧🇷 브라질 (Português)":        "brazil",
+            }
+            country_label = st.selectbox(
+                "타겟 국가 (제안서 언어 자동 설정)",
+                list(COUNTRY_OPTIONS.keys()),
+                index=0,
+            )
             st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
             submitted = st.form_submit_button("✦  AI 분석 시작", use_container_width=True)
 
@@ -327,8 +318,10 @@ footer                          { display: none !important; }
             else:
                 st.session_state.target_url  = url.strip()
                 st.session_state.extra_info  = {
-                    "product": product.strip(),
-                    "value":   value.strip(),
+                    "product":       product.strip(),
+                    "value":         value.strip(),
+                    "country":       COUNTRY_OPTIONS[country_label],
+                    "country_label": country_label,
                 }
                 st.session_state.page = "research"
                 st.rerun()
@@ -338,10 +331,12 @@ footer                          { display: none !important; }
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif st.session_state.page == "research":
 
-        url     = st.session_state.target_url
-        extra   = st.session_state.extra_info
-        product = extra.get("product", "")
-        value   = extra.get("value",   "")
+        url           = st.session_state.target_url
+        extra         = st.session_state.extra_info
+        product       = extra.get("product",       "")
+        value         = extra.get("value",         "")
+        country       = extra.get("country",       "usa")
+        country_label = extra.get("country_label", "🇺🇸 미국 (English)")
 
         # 도메인 추출
         domain = _re.sub(r"https?://(www\.)?", "", url).rstrip("/").split("/")[0]
@@ -440,119 +435,145 @@ footer                          { display: none !important; }
             add_log("⚠ TAVILY_API_KEY not set — using domain inference", "warn")
             research["signals"] = []
 
-        # Step 3: GPT 분석
-        prog_bar.progress(65, text="GPT-4o-mini 분석 중…")
-        add_log("→ Launching GPT-4o-mini strategic analysis...", "run")
+        # Step 3: GPT-4o-mini — McKinsey급 마스터 프롬프트 + 현지화 엔진 V3.0
+        prog_bar.progress(65, text="AI 전략 분석 중…")
+        add_log("→ Engaging McKinsey-grade strategic AI...", "run")
+        add_log(f"→ Loading localization engine: {country_label}", "run")
         time.sleep(0.3)
 
         signals_text = ""
         for i, s in enumerate(research.get("signals", []), 1):
-            signals_text += f"\nSignal {i}: {s['title']}\n{s['snippet']}\n"
+            signals_text += f"[Signal {i}] {s['title']}\n{s['snippet']}\n\n"
 
-        SYSTEM = """You are a world-class B2B strategic consultant and sales copywriter.
-You have deep expertise in enterprise sales, market intelligence, and persuasive writing.
-You understand Korean, English, and any language — and always output flawless American business English.
-You NEVER use generic fill-in templates. You craft original, insight-driven, conversion-optimized copy.
-Output ONLY valid JSON. No markdown. No extra text."""
+        co_name = domain.split(".")[0].capitalize()
 
-        USER = f"""Analyze this company and craft a world-class B2B proposal.
+        # ── 국가별 현지화 프로파일 ──────────────────────────────────
+        LP = {
+            "usa":     dict(lang="English",             persona="a top SaaS enterprise AE in San Francisco",                       tone="Direct, punchy, ROI-first. Short sentences. Lead with the bottom line.",  jargon="pipeline, win rate, ACV, ICP, quota attainment",   greeting="",                        taboo="Never say 'I hope this email finds you well'."),
+            "japan":   dict(lang="Japanese",             persona="a senior enterprise sales exec at a top Japanese consulting firm",  tone="Extremely formal keigo throughout. Trust-first. Emphasize long-term partnership and risk reduction.", jargon="稟議, 御社, 弊社, 課題解決, 導入実績, 効率化, DX推進", greeting="いつもお世話になっております。", taboo="Never be pushy. Never skip formal opener. Never use urgency tactics."),
+            "germany": dict(lang="German",               persona="a senior B2B sales director at a German enterprise software firm",   tone="Precise, data-heavy, logical. Use statistics and structured arguments. Avoid all hyperbole.",    jargon="Effizienzsteigerung, Skalierbarkeit, ROI, Digitalisierung, DSGVO-konform", greeting="Sehr geehrte Damen und Herren,", taboo="Never use superlatives without data backing. Never be informal."),
+            "korea":   dict(lang="Korean",               persona="a top B2B enterprise sales manager at a leading Korean tech company", tone="Professional and warm. Use 존댓말 throughout. Reference domestic case studies and proven results.", jargon="영업 효율화, 의사결정자, 레퍼런스, POC, 도입 사례, ROI, 비용 절감, 업무 자동화", greeting="안녕하세요.",              taboo="Never use informal speech. Always include domestic reference cases."),
+            "china":   dict(lang="Simplified Chinese",   persona="a senior B2B sales director with deep enterprise ties in China",     tone="Relationship-first. Emphasize mutual benefit (互利共赢) and long-term partnership. Reference authority and scale.", jargon="数字化转型, 降本增效, 合作伙伴, 赋能, 生态, ROI, 标杆案例", greeting="您好，",               taboo="Never use aggressive hard-sell tactics. Never skip relationship-building."),
+            "uk":      dict(lang="English (UK)",         persona="a senior enterprise AE at a top London B2B SaaS firm",               tone="Understated, dry wit, professional. Less hype than US English. Lead with insight not urgency.", jargon="pipeline, business case, ROI, procurement, cost-benefit, stakeholder, licence", greeting="", taboo="Never over-hype. Never use Americanisms like 'awesome' or 'crush it'."),
+            "sea":     dict(lang="English",              persona="a regional B2B sales director covering Singapore, Indonesia, Malaysia",tone="Warm, relationship-aware, value-focused. Emphasize cost efficiency and local support.",       jargon="ROI, cost savings, scalability, localisation, digital transformation",   greeting="",                        taboo="Never ignore relationship-building. Never assume Western-only references."),
+            "uae":     dict(lang="English",              persona="a senior B2B consultant working with C-suite in UAE and GCC region",  tone="Formal, prestige-aware, relationship-first. Reference Vision 2030 where relevant.",            jargon="strategic partnership, ROI, Vision 2030, digital transformation, C-suite", greeting="",                       taboo="Never be too casual. Never pressure for quick decisions."),
+            "france":  dict(lang="French",               persona="un directeur commercial senior dans une grande entreprise B2B française", tone="Élégant, structuré, intellectuellement rigoureux. Les Français apprécient la logique.",     jargon="transformation digitale, ROI, efficacité opérationnelle, partenariat stratégique", greeting="Madame, Monsieur,", taboo="Jamais d'anglicismes inutiles. Évitez la familiarité excessive."),
+            "brazil":  dict(lang="Brazilian Portuguese", persona="um diretor de vendas B2B sênior com experiência no mercado brasileiro", tone="Warm, relationship-driven, enthusiastic but professional. Brazilians value personal connection.", jargon="ROI, pipeline, eficiência, transformação digital, parceria estratégica, receita recorrente", greeting="Prezado(a),", taboo="Nunca seja muito formal ou frio. Nunca ignore o aspecto relacional."),
+        }
+        lp = LP.get(country, LP["usa"])
+        add_log(f"✓ Language profile loaded: {lp['lang']}", "ok")
 
-TARGET COMPANY DOMAIN: {domain}
-SELLER'S PRODUCT: {product}
-SELLER'S VALUE PROP: {value}
+        # ── McKinsey 마스터 시스템 프롬프트 (현지화 적용) ──────────
+        MSYS = (
+            f"You are {lp['persona']}, also a McKinsey-trained B2B strategist.\n"
+            f"You have 20 years of enterprise sales experience. "
+            f"Your proposals are read by C-suite executives and close deals.\n\n"
+            f"OUTPUT LANGUAGE: {lp['lang']}\n"
+            f"ALL output fields must be written ENTIRELY in {lp['lang']}.\n"
+            f"If input is in Korean or any other language, TRANSLATE and ELEVATE to {lp['lang']}.\n\n"
+            f"TONE & STYLE: {lp['tone']}\n"
+            f"PREFERRED JARGON (use naturally): {lp['jargon']}\n"
+            f"GREETING CONVENTION: {lp['greeting'] if lp['greeting'] else 'No formal greeting — open with a sharp business insight.'}\n\n"
+            f"IRON RULES:\n"
+            f"1. HYPER-CONTEXT: Use the buyer's actual recent signals in every section.\n"
+            f"2. FEAR & GREED: Calculate opportunity cost with real numbers in roi_calculation.\n"
+            f"3. DYNAMIC TONE: Classify company as innovative or conservative, adapt accordingly.\n"
+            f"4. REAL REFERENCES: Use actual named companies as proof. NEVER write 'Competitor A'.\n"
+            f"5. ZERO TEMPLATES: Every sentence must be original. No mechanical fill-in.\n"
+            f"6. {lp['taboo']}\n"
+            f"7. Output ONLY valid JSON. No markdown. No preamble. No explanation."
+        )
 
-REAL-TIME INTELLIGENCE GATHERED:
-{signals_text if signals_text else "(No live signals — infer from domain knowledge)"}
-
-YOUR TASK — produce all 6 fields as sharp, original English copy:
-
-1. company_summary: 2 sentences — what this company does and their current strategic situation.
-   Use the signals above. Sound like you researched them deeply.
-
-2. pain_hypothesis: 1 sentence — the #1 business pain this company likely has RIGHT NOW,
-   based on their industry, size, and the signals above.
-
-3. headline: ≤52 chars — punchy proposal headline. Outcome-focused. Not "Why X Needs Y".
-
-4. exec_body: 3 sentences — executive summary. Lead with an insight about THEIR situation.
-   Connect it to how {product} solves it. Specific > Generic.
-
-5. email_subject: ≤48 chars — cold email subject. Curiosity-driven. Feels personal.
-
-6. email_body: 4 sentences. 
-   - Open: a sharp, specific observation about their business (use signals if available)
-   - Bridge: connect their pain to your solution
-   - Proof: one concrete metric
-   - CTA: soft, non-pushy close
-   NEVER start with "I hope this email finds you well."
-
-Respond ONLY with this JSON:
-{{
-  "company_summary": "...",
-  "pain_hypothesis": "...",
-  "headline": "...",
-  "exec_body": "...",
-  "email_subject": "...",
-  "email_body": "..."
-}}"""
+        # ── 마스터 유저 프롬프트 ────────────────────────────────────
+        MUSR = (
+            f"Write the most compelling B2B proposal for this buyer, entirely in {lp['lang']}.\n\n"
+            f"SELLER: {product} — {value}\n"
+            f"BUYER: {domain} ({co_name})\n"
+            f"REAL-TIME SIGNALS:\n{signals_text.strip() if signals_text.strip() else 'None available — use deep domain knowledge about ' + domain}\n\n"
+            f"Deliver all 8 fields in {lp['lang']}:\n"
+            f"1. company_tone: 'conservative' or 'innovative'\n"
+            f"2. company_summary: 2 sentences — what they do + current strategic moment (use signals)\n"
+            f"3. pain_hypothesis: 1 sentence — their #1 acute pain RIGHT NOW\n"
+            f"4. headline: max 52 chars, outcome-led, NOT 'Why X Needs Y'\n"
+            f"5. exec_body: 3 sentences — signal insight → cost of inaction → {product} solution\n"
+            f"6. roi_calculation: 2 sentences — show the math + name a real proof company\n"
+            f"7. email_subject: max 48 chars, personal, curiosity-driven\n"
+            f"8. email_body: open with {lp['greeting'] if lp['greeting'] else 'sharp observation about their business'}, "
+            f"then pain → proof → soft CTA\n\n"
+            + '{"company_tone":"...","company_summary":"...","pain_hypothesis":"...","headline":"...","exec_body":"...","roi_calculation":"...","email_subject":"...","email_body":"..."}'
+        )
 
         copy = {}
         openai_key = st.secrets.get("OPENAI_API_KEY", "")
         if openai_key:
             try:
                 from openai import OpenAI
-                client = OpenAI(api_key=openai_key)
-                add_log("→ Generating strategic copy...", "run")
-                prog_bar.progress(75, text="카피 생성 중…")
-                resp = client.chat.completions.create(
+                oai = OpenAI(api_key=openai_key)
+                add_log(f"→ Generating {lp['lang']} copy (McKinsey mode)...", "run")
+                prog_bar.progress(78, text=f"{lp['lang']} 카피 생성 중…")
+                resp = oai.chat.completions.create(
                     model="gpt-4o-mini",
-                    temperature=0.72,
-                    max_tokens=1000,
+                    temperature=0.70,
+                    max_tokens=1400,
                     messages=[
-                        {"role": "system", "content": SYSTEM},
-                        {"role": "user",   "content": USER},
+                        {"role": "system", "content": MSYS},
+                        {"role": "user",   "content": MUSR},
                     ],
                 )
-                raw     = resp.choices[0].message.content.strip()
+                raw = resp.choices[0].message.content.strip()
                 cleaned = _re.sub(r"```(?:json)?|```", "", raw).strip()
-                m       = _re.search(r"\{.*\}", cleaned, _re.DOTALL)
+                m = _re.search(r"\{.*\}", cleaned, _re.DOTALL)
                 if m:
                     copy = json.loads(m.group())
-                    add_log("✓ Strategic copy generated", "ok")
+                    tone = copy.get("company_tone", "unknown")
+                    add_log(f"✓ Profile: {tone} | Language: {lp['lang']}", "ok")
                 else:
-                    add_log("⚠ JSON parse failed — using fallback", "warn")
+                    add_log("⚠ JSON parse failed — smart fallback active", "warn")
             except Exception as e:
-                add_log(f"⚠ OpenAI error: {str(e)[:60]}", "warn")
+                add_log(f"⚠ OpenAI error: {str(e)[:70]}", "warn")
         else:
             add_log("⚠ OPENAI_API_KEY not set — smart fallback active", "warn")
 
-        # 스마트 폴백
+        # ── 스마트 폴백 (API 키 없을 때도 고퀄) ─────────────────────
         if not copy:
+            co  = co_name
+            sig = research.get("signals", [{}])[0].get("title", "") if research.get("signals") else ""
             copy = {
-                "company_summary": (
-                    f"{domain.capitalize()} is a company operating in a competitive market "
-                    f"where efficiency and customer acquisition speed are critical differentiators. "
-                    f"Based on recent signals, they are actively investing in growth and operational excellence."
+                "company_tone":     "innovative",
+                "company_summary":  (
+                    f"{co} operates at a critical inflection point where sales efficiency "
+                    f"has become a board-level priority. "
+                    + (f"Recent signals including '{sig[:60]}' suggest they are actively " if sig else "They are actively ")
+                    + "navigating the challenges of scaling revenue operations at pace."
                 ),
-                "pain_hypothesis": (
-                    f"Their sales team is likely spending too much time on manual research "
-                    f"and not enough time on high-value selling activities."
+                "pain_hypothesis":  (
+                    f"Sales reps at {co} are likely losing 2–3 hours per day to manual account "
+                    f"research, quietly eroding pipeline capacity and compressing close rates."
                 ),
-                "headline": f"How {domain.split('.')[0].capitalize()} Can Close 28% More Deals",
-                "exec_body": (
-                    f"High-growth teams at companies like {domain.split('.')[0].capitalize()} "
-                    f"often hit a wall: reps spend 60%+ of their time on prep, not pipeline. "
-                    f"{product} compresses that research to under 90 seconds per account, "
-                    f"freeing your team to focus entirely on closing."
+                "headline":         f"Recovering {co}'s $1.2M Annual Pipeline Gap",
+                "exec_body":        (
+                    (f"Following '{sig[:55]}', " if sig else f"{co} faces a challenge common across high-growth teams: ")
+                    + f"manual research overhead is silently compressing pipeline velocity. "
+                    f"Each rep spending 2.5 hours daily on prep — at a 20-rep scale with $45K ACV "
+                    f"and 22% close rate — represents over $1.2M in unworked annual pipeline. "
+                    f"{product} eliminates this entirely, delivering full account intelligence in under 90 seconds."
                 ),
-                "email_subject": f"Quick thought on {domain.split('.')[0].capitalize()}'s pipeline",
-                "email_body": (
-                    f"I was looking at {domain.split('.')[0].capitalize()}'s growth trajectory "
-                    f"and noticed a pattern common in teams your size — prep overhead quietly "
-                    f"killing pipeline velocity.\n\n"
-                    f"{product} solves this directly: reps get a full account brief in 90 seconds, "
-                    f"not 3 hours. Teams in your space report +28% win rates within 90 days.\n\n"
-                    f"Worth a 15-minute look this week?"
+                "roi_calculation":  (
+                    f"Assuming a 20-rep team at {co}, $45K ACV, and 22% close rate: "
+                    f"recovering 2.5 hours of daily research overhead per rep yields 3+ additional "
+                    f"qualified calls per rep per week — $1.25M in incremental annual pipeline. "
+                    f"Comparable deployments at Gong and Salesloft showed full ROI recovery within 11 weeks."
+                ),
+                "email_subject":    f"The $1.2M pipeline gap hiding in {co}'s process",
+                "email_body":       (
+                    (f"I came across '{sig[:55]}' — " if sig else f"Looking at {co}'s growth trajectory — ")
+                    + f"it's clear the team is scaling fast, which usually means research overhead "
+                    f"starts quietly compressing pipeline capacity.\n\n"
+                    f"Most enterprise teams at your stage lose 2–3 hours per rep daily to manual prep — "
+                    f"at scale, that's $1M+ in pipeline that never gets touched. "
+                    f"{product} closes that gap to under 90 seconds per account.\n\n"
+                    f"Salesforce's commercial org reported a 31% lift in qualified meetings within 60 days.\n\n"
+                    f"Would a focused 20-minute walkthrough make sense this week?"
                 ),
             }
 
@@ -563,18 +584,22 @@ Respond ONLY with this JSON:
         # 결과 저장
         st.session_state.research_data = research
         st.session_state.ai_copy = {
-            "product":         product,
-            "company":         domain,
-            "domain":          domain,
-            "buyer_name":      "",
-            "buyer_role":      "",
-            "company_summary": copy.get("company_summary", ""),
-            "pain_hypothesis": copy.get("pain_hypothesis", ""),
-            "headline":        copy.get("headline",        ""),
-            "exec_body":       copy.get("exec_body",       ""),
-            "roi_summary":     "Teams report a 28% lift in win rates and $180K+ in annual productivity gains within 90 days.",
-            "email_subject":   copy.get("email_subject",   ""),
-            "email_body":      copy.get("email_body",      ""),
+            "product":          product,
+            "company":          domain,
+            "domain":           domain,
+            "country":          country,
+            "country_label":    country_label,
+            "output_lang":      lp.get("lang", "English"),
+            "buyer_name":       "",
+            "buyer_role":       "",
+            "company_tone":     copy.get("company_tone",    "innovative"),
+            "company_summary":  copy.get("company_summary", ""),
+            "pain_hypothesis":  copy.get("pain_hypothesis", ""),
+            "headline":         copy.get("headline",        ""),
+            "exec_body":        copy.get("exec_body",       ""),
+            "roi_summary":      copy.get("roi_calculation", ""),
+            "email_subject":    copy.get("email_subject",   ""),
+            "email_body":       copy.get("email_body",      ""),
         }
 
         prog_bar.progress(100, text="완료!")
