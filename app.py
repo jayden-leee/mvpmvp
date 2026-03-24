@@ -132,9 +132,9 @@ div[data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
 
         # KPI 카드
         c1, c2, c3 = st.columns(3)
-        c1.markdown('<div class="kpi-box"><div class="kpi-val">10분</div><div class="kpi-lbl">제안서 초안 생성</div></div>', unsafe_allow_html=True)
+        c1.markdown('<div class="kpi-box"><div class="kpi-val">90초</div><div class="kpi-lbl">제안서 초안 생성</div></div>', unsafe_allow_html=True)
         c2.markdown('<div class="kpi-box"><div class="kpi-val">10개국</div><div class="kpi-lbl">문화 맞춤 전략</div></div>', unsafe_allow_html=True)
-        c3.markdown('<div class="kpi-box"><div class="kpi-val">+10.2%</div><div class="kpi-lbl">평균 Win Rate 향상</div></div>', unsafe_allow_html=True)
+        c3.markdown('<div class="kpi-box"><div class="kpi-val">+28%</div><div class="kpi-lbl">평균 Win Rate 향상</div></div>', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -156,55 +156,132 @@ div[data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
 
         st.markdown("""
 <style>
-[data-testid="stSidebar"] { display: none !important; }
-.stApp { background: #f8faff !important; }
-.main .block-container { max-width: 720px !important; padding-top: 1.5rem !important; }
-.chat-header { background: linear-gradient(135deg,#0f2044,#1e3a70);
-               padding: 14px 22px; border-radius: 14px; margin-bottom: 1.2rem;
-               display: flex; justify-content: space-between; align-items: center; }
-.chat-logo   { font-size: 17px; font-weight: 800; color: #fff; }
-.chat-logo span { color: #c9a84c; }
-.chat-step   { font-size: 11px; color: rgba(255,255,255,.5); }
-.bubble-ai   { background: #fff; border: 1px solid #e8edf5; border-radius: 18px 18px 18px 4px;
-               padding: 13px 17px; margin: 6px 0; font-size: 14px; line-height: 1.65;
-               max-width: 82%; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-.bubble-user { background: #0f2044; color: #fff; border-radius: 18px 18px 4px 18px;
-               padding: 13px 17px; margin: 6px 0 6px auto; font-size: 14px;
-               max-width: 72%; text-align: right; }
-.lbl-ai   { font-size: 10px; color: #94a3b8; margin-bottom: 3px; }
-.lbl-user { font-size: 10px; color: #94a3b8; margin-bottom: 3px; text-align: right; }
-.stTextInput > div > div > input { border-radius: 12px !important; font-size: 14px !important;
-    border: 1.5px solid #dde3f0 !important; padding: 12px 16px !important; }
-.stTextInput > div > div > input:focus { border-color: #3182f6 !important;
-    box-shadow: 0 0 0 3px rgba(49,130,246,.12) !important; }
+/* ── 전체 레이아웃 ── */
+[data-testid="stSidebar"]  { display: none !important; }
+[data-testid="stToolbar"]  { display: none !important; }
+.stApp                     { background: #f0f4f8 !important; }
+.main .block-container     {
+    max-width: 680px !important;
+    margin: 0 auto !important;
+    padding: 2rem 1.5rem 4rem !important;
+}
+
+/* ── 헤더 바 ── */
+.chat-header {
+    background: linear-gradient(135deg, #0f2044, #1e3a70);
+    padding: 14px 22px; border-radius: 16px; margin-bottom: 1.4rem;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 16px rgba(15,32,68,.25);
+}
+.chat-logo       { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.4px; }
+.chat-logo span  { color: #c9a84c; }
+.chat-step-badge {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 100px; padding: 4px 13px;
+    font-size: 11px; font-weight: 600; color: rgba(255,255,255,.75);
+}
+
+/* ── AI 말풍선 ── */
+.bubble-ai {
+    background: #ffffff;
+    color: #1a1f36 !important;          /* ← 흰 배경에 짙은 텍스트 */
+    border: 1px solid #dde3f0;
+    border-radius: 4px 18px 18px 18px;
+    padding: 14px 18px;
+    margin: 4px 0 10px;
+    font-size: 15px; line-height: 1.7;
+    max-width: 86%;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+}
+.bubble-ai strong { color: #0f2044; }   /* 볼드도 명확하게 */
+
+/* ── 유저 말풍선 ── */
+.bubble-user {
+    background: #0f2044; color: #fff;
+    border-radius: 18px 4px 18px 18px;
+    padding: 14px 18px;
+    margin: 4px 0 10px auto;
+    font-size: 15px; line-height: 1.7;
+    max-width: 78%; text-align: right;
+    box-shadow: 0 2px 10px rgba(15,32,68,.2);
+}
+
+/* ── 레이블 ── */
+.lbl-ai   { font-size: 11px; color: #8896b3; margin-bottom: 4px; font-weight: 600; }
+.lbl-user { font-size: 11px; color: #8896b3; margin-bottom: 4px; font-weight: 600; text-align: right; }
+
+/* ── 입력창 ── */
+.stTextInput > div > div > input {
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    color: #1a1f36 !important;
+    background: #fff !important;
+    border: 1.5px solid #c8d4e8 !important;
+    padding: 13px 16px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06) !important;
+}
+.stTextInput > div > div > input:focus {
+    border-color: #3182f6 !important;
+    box-shadow: 0 0 0 3px rgba(49,130,246,.13) !important;
+}
+.stTextInput > div > div > input::placeholder { color: #a0aec0 !important; }
+
+/* ── 전송 버튼 ── */
+.stFormSubmitButton > button, button[kind="primaryFormSubmit"] {
+    background: linear-gradient(135deg, #0f2044, #1e3a70) !important;
+    color: #fff !important;
+    font-size: 15px !important; font-weight: 700 !important;
+    border-radius: 12px !important; border: none !important;
+    padding: 13px 0 !important;
+    box-shadow: 0 4px 14px rgba(15,32,68,.3) !important;
+    transition: all .18s !important;
+}
+.stFormSubmitButton > button:hover {
+    filter: brightness(1.15) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 18px rgba(15,32,68,.4) !important;
+}
+
+/* ── 진행 바 ── */
+.stProgress > div > div > div { background: #3182f6 !important; border-radius: 100px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-        # 헤더
+        # ── 헤더 ─────────────────────────────────────────────────
         step_now = min(st.session_state.interview_step + 1, len(QUESTIONS))
         st.markdown(
             f'<div class="chat-header">'
             f'<span class="chat-logo">opener<span>ultra</span></span>'
-            f'<span class="chat-step">AI 인터뷰 · 질문 {step_now} / {len(QUESTIONS)}</span>'
+            f'<span class="chat-step-badge">질문 {step_now} / {len(QUESTIONS)}</span>'
             f'</div>',
             unsafe_allow_html=True,
         )
 
-        # 진행 바
-        st.progress(st.session_state.interview_step / len(QUESTIONS),
-                    text=f"진행률 {int(st.session_state.interview_step / len(QUESTIONS) * 100)}%")
-        st.markdown("<br>", unsafe_allow_html=True)
+        # ── 진행 바 ──────────────────────────────────────────────
+        pct = st.session_state.interview_step / len(QUESTIONS)
+        st.progress(pct, text=f"인터뷰 진행률 {int(pct*100)}%")
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-        # 채팅 히스토리
+        # ── 채팅 히스토리 ─────────────────────────────────────────
         for msg in st.session_state.chat_history:
             if msg["role"] == "ai":
-                st.markdown(f'<div class="lbl-ai">🤖 Opener AI</div><div class="bubble-ai">{msg["text"]}</div>', unsafe_allow_html=True)
+                # **텍스트를 마크다운으로 렌더링하기 위해 bold 처리
+                txt = msg["text"].replace("**", "<strong>").replace("**", "</strong>")
+                st.markdown(
+                    f'<div class="lbl-ai">🤖 Opener AI</div>'
+                    f'<div class="bubble-ai">{msg["text"]}</div>',
+                    unsafe_allow_html=True,
+                )
             else:
-                st.markdown(f'<div class="lbl-user">👤 나</div><div class="bubble-user">{msg["text"]}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="lbl-user">👤 나</div>'
+                    f'<div class="bubble-user">{msg["text"]}</div>',
+                    unsafe_allow_html=True,
+                )
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-        # 현재 질문 입력창
+        # ── 입력 폼 ───────────────────────────────────────────────
         step = st.session_state.interview_step
         if step < len(QUESTIONS):
             key, _, placeholder = QUESTIONS[step]
