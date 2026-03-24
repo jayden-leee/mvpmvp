@@ -132,7 +132,7 @@ div[data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
 
         # KPI 카드
         c1, c2, c3 = st.columns(3)
-        c1.markdown('<div class="kpi-box"><div class="kpi-val">90초</div><div class="kpi-lbl">제안서 초안 생성</div></div>', unsafe_allow_html=True)
+        c1.markdown('<div class="kpi-box"><div class="kpi-val">10분</div><div class="kpi-lbl">제안서 초안 생성</div></div>', unsafe_allow_html=True)
         c2.markdown('<div class="kpi-box"><div class="kpi-val">10개국</div><div class="kpi-lbl">문화 맞춤 전략</div></div>', unsafe_allow_html=True)
         c3.markdown('<div class="kpi-box"><div class="kpi-val">+28%</div><div class="kpi-lbl">평균 Win Rate 향상</div></div>', unsafe_allow_html=True)
 
