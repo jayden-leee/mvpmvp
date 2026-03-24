@@ -37,11 +37,12 @@ ROOT = Path(os.path.abspath(__file__)).parent
 # ── Streamlit 모드 감지 ───────────────────────────────────────────
 _ST = "streamlit" in sys.modules or any("streamlit" in a for a in sys.argv)
 
+
 ###################################################################
 #  A. STREAMLIT ENTRY-POINT  (3-Page Flow)
-#     page 1 : landing
-#     page 2 : chatbot interview
-#     page 3 : editor + send
+#     page 1 : landing   — 풀스크린 히어로 + CTA
+#     page 2 : interview — AI 챗봇 6문답
+#     page 3 : editor    — 카피 편집 + PDF + 발송
 ###################################################################
 if _ST:
     import streamlit as st
@@ -52,72 +53,21 @@ if _ST:
         layout="wide",
     )
 
-    # ── 공통 CSS ─────────────────────────────────────────────────
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap');
-    html, body, [class*="css"] { font-family: 'Pretendard', -apple-system, sans-serif; }
-    .main .block-container { padding-top: 0 !important; padding-bottom: 2rem; max-width: 900px; }
-
-    /* 랜딩 전용 — wide 컨테이너 */
-    .landing-wrap .block-container { max-width: 100% !important; }
-
-    .stButton > button {
-        border-radius: 12px; font-weight: 700;
-        transition: all .18s cubic-bezier(.4,0,.2,1);
-    }
-    .stButton > button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(49,130,246,.3); }
-
-    /* 채팅 버블 */
-    .chat-ai {
-        background: #f0f4ff; border-radius: 18px 18px 18px 4px;
-        padding: 13px 18px; margin: 6px 0; font-size: 14px;
-        border: 1px solid rgba(49,130,246,.1); max-width: 82%;
-    }
-    .chat-user {
-        background: #0f2044; color: #fff;
-        border-radius: 18px 18px 4px 18px;
-        padding: 13px 18px; margin: 6px 0 6px auto;
-        font-size: 14px; max-width: 72%; text-align: right;
-    }
-    .chat-label-ai  { font-size: 10px; color: #94a3b8; margin-bottom: 3px; }
-    .chat-label-usr { font-size: 10px; color: #94a3b8; margin-bottom: 3px; text-align: right; }
-
-    /* 입력창 꾸미기 */
-    .stTextInput > div > div > input {
-        border-radius: 10px; border: 1.5px solid #e2e8f0;
-        font-size: 14px; padding: 10px 14px;
-    }
-    .stTextInput > div > div > input:focus { border-color: #3182f6; box-shadow: 0 0 0 3px rgba(49,130,246,.12); }
-    </style>
-    """, unsafe_allow_html=True)
-
     # ── 세션 초기화 ───────────────────────────────────────────────
-    if "page" not in st.session_state:
-        st.session_state.page = "landing"
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-    if "interview_step" not in st.session_state:
-        st.session_state.interview_step = 0
-    if "interview_answers" not in st.session_state:
-        st.session_state.interview_answers = {}
-    if "ai_copy" not in st.session_state:
-        st.session_state.ai_copy = {}
+    if "page"               not in st.session_state: st.session_state.page               = "landing"
+    if "chat_history"       not in st.session_state: st.session_state.chat_history       = []
+    if "interview_step"     not in st.session_state: st.session_state.interview_step     = 0
+    if "interview_answers"  not in st.session_state: st.session_state.interview_answers  = {}
+    if "ai_copy"            not in st.session_state: st.session_state.ai_copy            = {}
 
     # ── 인터뷰 질문 시나리오 ───────────────────────────────────────
     QUESTIONS = [
-        ("product_name",   "반갑습니다! 😊 먼저 **어떤 제품/서비스**를 판매하고 계신가요?",
-                           "예: OpenerUltra, 세일즈 AI 플랫폼"),
-        ("value_prop",     "멋지네요! 그 제품의 **핵심 가치**를 한 문장으로 표현하면 어떻게 될까요?",
-                           "예: 영업사원의 리서치 시간을 3시간→90초로 줄여줍니다"),
-        ("buyer_company",  "어떤 **회사**에 제안서를 보내실 예정인가요?",
-                           "예: Kakao, Samsung, 현대자동차"),
-        ("buyer_name",     "담당자 **이름**을 알고 계신가요? (모르시면 스킵 가능)",
-                           "예: 김민수 / 모름"),
-        ("buyer_role",     "그분의 **직책**은 무엇인가요?",
-                           "예: VP Sales, 영업본부장, CTO"),
-        ("pain_point",     "마지막으로, 그 회사가 **지금 겪고 있는 문제**가 무엇이라고 생각하세요?",
-                           "예: 영업팀이 수작업 리서치에 너무 많은 시간을 씀"),
+        ("product_name",  "반갑습니다! 😊 먼저 **어떤 제품/서비스**를 판매하고 계신가요?",         "예: OpenerUltra, 세일즈 AI 플랫폼"),
+        ("value_prop",    "멋지네요! 그 제품의 **핵심 가치**를 한 문장으로 표현하면?",              "예: 영업 리서치 시간을 3시간→90초로 줄여줍니다"),
+        ("buyer_company", "어떤 **회사**에 제안서를 보내실 예정인가요?",                            "예: Kakao, Samsung, 현대자동차"),
+        ("buyer_name",    "담당자 **이름**을 알고 계신가요? (모르시면 '모름' 입력)",                "예: 김민수 / 모름"),
+        ("buyer_role",    "그분의 **직책**은 무엇인가요?",                                          "예: VP Sales, 영업본부장, CTO"),
+        ("pain_point",    "마지막! 그 회사가 **지금 겪고 있는 문제**는 무엇인가요?",                "예: 영업팀이 수작업 리서치에 너무 많은 시간을 씀"),
     ]
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -125,267 +75,203 @@ if _ST:
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     if st.session_state.page == "landing":
 
-        # 사이드바 완전 숨기기
         st.markdown("""
-        <style>
-        [data-testid="stSidebar"] { display: none !important; }
-        .main .block-container { max-width: 100% !important; padding: 0 !important; }
-        </style>
-        """, unsafe_allow_html=True)
+<style>
+[data-testid="stSidebar"]  { display: none !important; }
+[data-testid="stToolbar"]  { display: none !important; }
+.stApp                     { background: #0a1628 !important; }
+.main .block-container     { max-width: 820px !important; padding-top: 4rem !important; }
+div[data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
+.badge-wrap   { text-align: center; margin-bottom: 1.5rem; }
+.badge        { display: inline-block; background: rgba(201,168,76,.13);
+                border: 1px solid rgba(201,168,76,.35); border-radius: 100px;
+                padding: 5px 20px; font-size: 11px; font-weight: 700;
+                letter-spacing: 1.2px; text-transform: uppercase; color: #c9a84c; }
+.hero-title   { font-size: 62px; font-weight: 800; color: #fff;
+                line-height: 1.1; letter-spacing: -2.5px; text-align: center;
+                margin: 0 0 10px; }
+.hero-sub     { font-size: 21px; color: #c9a84c; font-weight: 600;
+                text-align: center; letter-spacing: -.3px; margin: 0 0 18px; }
+.hero-desc    { font-size: 16px; color: rgba(255,255,255,.5); line-height: 1.8;
+                text-align: center; margin: 0 auto 2rem; }
+.kpi-box      { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+                border-radius: 16px; padding: 22px 10px; text-align: center; }
+.kpi-val      { font-size: 34px; font-weight: 800; color: #fff; }
+.kpi-lbl      { font-size: 12px; color: rgba(255,255,255,.45); margin-top: 6px; }
+.stButton > button {
+    background: #3182f6 !important; color: #fff !important;
+    font-size: 17px !important; font-weight: 800 !important;
+    padding: 18px 0 !important; border-radius: 14px !important;
+    border: none !important; letter-spacing: -.3px !important;
+    box-shadow: 0 8px 28px rgba(49,130,246,.4) !important;
+    transition: all .2s !important;
+}
+.stButton > button:hover {
+    background: #2563eb !important;
+    box-shadow: 0 10px 36px rgba(49,130,246,.6) !important;
+    transform: translateY(-2px) !important;
+}
+.foot-note { text-align: center; font-size: 12px; color: rgba(255,255,255,.25); margin-top: .5rem; }
+</style>
+""", unsafe_allow_html=True)
 
-        # ── 히어로 섹션 ──────────────────────────────────────────
-        st.markdown("""
-        <div style='
-            min-height: 100vh;
-            background: linear-gradient(160deg, #0a1628 0%, #0f2044 40%, #1a1040 100%);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            padding: 60px 24px; text-align: center;
-        '>
-            <div style='
-                display: inline-block;
-                background: rgba(201,168,76,.12);
-                border: 1px solid rgba(201,168,76,.3);
-                border-radius: 100px; padding: 5px 18px;
-                font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
-                text-transform: uppercase; color: #c9a84c; margin-bottom: 28px;
-            '>✦ AI-Powered · B2B Sales Intelligence</div>
+        # 배지
+        st.markdown('<div class="badge-wrap"><span class="badge">✦ AI-Powered · B2B Sales Intelligence</span></div>', unsafe_allow_html=True)
 
-            <h1 style='
-                font-size: clamp(32px, 5vw, 64px);
-                font-weight: 800; color: #fff;
-                line-height: 1.15; letter-spacing: -1.5px;
-                margin-bottom: 12px; max-width: 820px;
-            '>Opener AI</h1>
+        # 타이틀
+        st.markdown('<p class="hero-title">Opener AI</p>', unsafe_allow_html=True)
+        st.markdown('<p class="hero-sub">글로벌 세일즈를 위한 초개인화 제안서</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="hero-desc">'
+            '바이어를 60초 안에 꿰뚫는 AI 딥 리서치 · '
+            '10개국 문화 맞춤 전략 · 8페이지 엔터프라이즈 PDF 제안서를 '
+            '단 한 번의 대화로 완성하세요.'
+            '</p>',
+            unsafe_allow_html=True,
+        )
 
-            <p style='
-                font-size: clamp(16px, 2.5vw, 22px);
-                color: #c9a84c; font-weight: 600;
-                margin-bottom: 20px; letter-spacing: -.3px;
-            '>글로벌 세일즈를 위한 초개인화 제안서</p>
+        # KPI 카드
+        c1, c2, c3 = st.columns(3)
+        c1.markdown('<div class="kpi-box"><div class="kpi-val">90초</div><div class="kpi-lbl">제안서 초안 생성</div></div>', unsafe_allow_html=True)
+        c2.markdown('<div class="kpi-box"><div class="kpi-val">10개국</div><div class="kpi-lbl">문화 맞춤 전략</div></div>', unsafe_allow_html=True)
+        c3.markdown('<div class="kpi-box"><div class="kpi-val">+28%</div><div class="kpi-lbl">평균 Win Rate 향상</div></div>', unsafe_allow_html=True)
 
-            <p style='
-                font-size: 16px; color: rgba(255,255,255,.55);
-                max-width: 560px; line-height: 1.75; margin-bottom: 48px;
-            '>바이어를 60초 안에 꿰뚫는 AI 딥 리서치 ·
-            10개국 문화 맞춤 전략 · 8페이지 엔터프라이즈 PDF 제안서를
-            단 한 번의 대화로 완성하세요.</p>
+        st.markdown("<br>", unsafe_allow_html=True)
 
-            <div style='display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 64px;'>
-                <div style='background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-                     border-radius:12px;padding:16px 24px;min-width:160px;'>
-                    <div style='font-size:28px;font-weight:800;color:#fff'>90초</div>
-                    <div style='font-size:12px;color:rgba(255,255,255,.5);margin-top:3px'>제안서 초안 생성</div>
-                </div>
-                <div style='background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-                     border-radius:12px;padding:16px 24px;min-width:160px;'>
-                    <div style='font-size:28px;font-weight:800;color:#fff'>10개국</div>
-                    <div style='font-size:12px;color:rgba(255,255,255,.5);margin-top:3px'>문화 맞춤 전략</div>
-                </div>
-                <div style='background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-                     border-radius:12px;padding:16px 24px;min-width:160px;'>
-                    <div style='font-size:28px;font-weight:800;color:#fff'>+28%</div>
-                    <div style='font-size:12px;color:rgba(255,255,255,.5);margin-top:3px'>평균 Win Rate 향상</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ── CTA 버튼 ─────────────────────────────────────────────
-        col_l, col_c, col_r = st.columns([1, 2, 1])
-        with col_c:
-            if st.button(
-                "🚀  내 제품으로 AI 제안서 만들기",
-                use_container_width=True,
-                type="primary",
-            ):
-                st.session_state.page = "interview"
-                st.session_state.chat_history = []
+        # CTA 버튼
+        _, mid, _ = st.columns([1, 2, 1])
+        with mid:
+            if st.button("🚀  내 제품으로 AI 제안서 만들기", use_container_width=True, type="primary"):
+                st.session_state.page           = "interview"
+                st.session_state.chat_history   = [{"role": "ai", "text": QUESTIONS[0][1]}]
                 st.session_state.interview_step = 0
                 st.session_state.interview_answers = {}
-                # 첫 질문 추가
-                st.session_state.chat_history.append({
-                    "role": "ai",
-                    "text": QUESTIONS[0][1],
-                })
                 st.rerun()
-
-            st.markdown(
-                "<p style='text-align:center;font-size:12px;"
-                "color:rgba(255,255,255,.3);margin-top:10px'>"
-                "API 키 불필요 · 60초 완성 · 무료 체험</p>",
-                unsafe_allow_html=True,
-            )
+            st.markdown('<p class="foot-note">API 키 불필요 · 60초 완성 · 무료 체험</p>', unsafe_allow_html=True)
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     #  PAGE 2 — AI CHATBOT INTERVIEW
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif st.session_state.page == "interview":
 
-        # 사이드바 숨기기
         st.markdown("""
-        <style>
-        [data-testid="stSidebar"] { display: none !important; }
-        </style>
-        """, unsafe_allow_html=True)
+<style>
+[data-testid="stSidebar"] { display: none !important; }
+.stApp { background: #f8faff !important; }
+.main .block-container { max-width: 720px !important; padding-top: 1.5rem !important; }
+.chat-header { background: linear-gradient(135deg,#0f2044,#1e3a70);
+               padding: 14px 22px; border-radius: 14px; margin-bottom: 1.2rem;
+               display: flex; justify-content: space-between; align-items: center; }
+.chat-logo   { font-size: 17px; font-weight: 800; color: #fff; }
+.chat-logo span { color: #c9a84c; }
+.chat-step   { font-size: 11px; color: rgba(255,255,255,.5); }
+.bubble-ai   { background: #fff; border: 1px solid #e8edf5; border-radius: 18px 18px 18px 4px;
+               padding: 13px 17px; margin: 6px 0; font-size: 14px; line-height: 1.65;
+               max-width: 82%; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.bubble-user { background: #0f2044; color: #fff; border-radius: 18px 18px 4px 18px;
+               padding: 13px 17px; margin: 6px 0 6px auto; font-size: 14px;
+               max-width: 72%; text-align: right; }
+.lbl-ai   { font-size: 10px; color: #94a3b8; margin-bottom: 3px; }
+.lbl-user { font-size: 10px; color: #94a3b8; margin-bottom: 3px; text-align: right; }
+.stTextInput > div > div > input { border-radius: 12px !important; font-size: 14px !important;
+    border: 1.5px solid #dde3f0 !important; padding: 12px 16px !important; }
+.stTextInput > div > div > input:focus { border-color: #3182f6 !important;
+    box-shadow: 0 0 0 3px rgba(49,130,246,.12) !important; }
+</style>
+""", unsafe_allow_html=True)
 
         # 헤더
-        st.markdown("""
-        <div style='background:linear-gradient(135deg,#0f2044,#1e3a70);
-             padding:16px 28px;border-radius:14px;margin-bottom:24px;
-             display:flex;justify-content:space-between;align-items:center'>
-          <div>
-            <span style='font-size:18px;font-weight:800;color:#fff'>
-              opener<span style='color:#c9a84c'>ultra</span>
-            </span>
-            <span style='font-size:12px;color:rgba(255,255,255,.4);margin-left:12px'>
-              AI 인터뷰 · 2/3단계
-            </span>
-          </div>
-          <div style='font-size:11px;color:rgba(255,255,255,.4)'>
-            질문 {step}/{total}
-          </div>
-        </div>
-        """.format(
-            step=min(st.session_state.interview_step + 1, len(QUESTIONS)),
-            total=len(QUESTIONS),
-        ), unsafe_allow_html=True)
+        step_now = min(st.session_state.interview_step + 1, len(QUESTIONS))
+        st.markdown(
+            f'<div class="chat-header">'
+            f'<span class="chat-logo">opener<span>ultra</span></span>'
+            f'<span class="chat-step">AI 인터뷰 · 질문 {step_now} / {len(QUESTIONS)}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
         # 진행 바
-        prog_pct = st.session_state.interview_step / len(QUESTIONS)
-        st.progress(prog_pct, text=f"인터뷰 진행률 {int(prog_pct*100)}%")
+        st.progress(st.session_state.interview_step / len(QUESTIONS),
+                    text=f"진행률 {int(st.session_state.interview_step / len(QUESTIONS) * 100)}%")
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # ── 채팅 히스토리 출력 ─────────────────────────────────
+        # 채팅 히스토리
         for msg in st.session_state.chat_history:
             if msg["role"] == "ai":
-                st.markdown(
-                    f"<div class='chat-label-ai'>🤖 Opener AI</div>"
-                    f"<div class='chat-ai'>{msg['text']}</div>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f'<div class="lbl-ai">🤖 Opener AI</div><div class="bubble-ai">{msg["text"]}</div>', unsafe_allow_html=True)
             else:
-                st.markdown(
-                    f"<div class='chat-label-usr'>👤 나</div>"
-                    f"<div class='chat-user'>{msg['text']}</div>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f'<div class="lbl-user">👤 나</div><div class="bubble-user">{msg["text"]}</div>', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # ── 아직 질문이 남아있을 때 ────────────────────────────
+        # 현재 질문 입력창
         step = st.session_state.interview_step
         if step < len(QUESTIONS):
             key, _, placeholder = QUESTIONS[step]
-
-            with st.form(key=f"form_{step}", clear_on_submit=True):
-                user_input = st.text_input(
-                    "답변을 입력하세요",
-                    placeholder=placeholder,
-                    label_visibility="collapsed",
-                )
-                submitted = st.form_submit_button(
-                    "➤ 전송",
-                    use_container_width=True,
-                    type="primary",
-                )
-
-            if submitted and user_input.strip():
-                # 답변 저장
-                st.session_state.interview_answers[key] = user_input.strip()
-                st.session_state.chat_history.append(
-                    {"role": "user", "text": user_input.strip()}
-                )
+            with st.form(key=f"q_{step}", clear_on_submit=True):
+                ans = st.text_input("답변", placeholder=placeholder, label_visibility="collapsed")
+                ok  = st.form_submit_button("➤ 전송", use_container_width=True, type="primary")
+            if ok and ans.strip():
+                st.session_state.interview_answers[key] = ans.strip()
+                st.session_state.chat_history.append({"role": "user", "text": ans.strip()})
                 st.session_state.interview_step += 1
-
-                # 다음 질문 또는 완료
-                next_step = st.session_state.interview_step
-                if next_step < len(QUESTIONS):
-                    st.session_state.chat_history.append({
-                        "role": "ai",
-                        "text": QUESTIONS[next_step][1],
-                    })
+                nxt = st.session_state.interview_step
+                if nxt < len(QUESTIONS):
+                    st.session_state.chat_history.append({"role": "ai", "text": QUESTIONS[nxt][1]})
                 else:
-                    st.session_state.chat_history.append({
-                        "role": "ai",
-                        "text": "✅ 완벽해요! 모든 정보를 받았습니다.\n\n"
-                                "지금 AI가 **바이어 분석 → 전략 수립 → 카피 생성**을 진행합니다. "
-                                "잠시만 기다려 주세요! 🚀",
-                    })
+                    st.session_state.chat_history.append({"role": "ai", "text": "✅ 완벽해요! AI가 제안서를 생성합니다. 잠시만요 🚀"})
                 st.rerun()
 
-        # ── 인터뷰 완료 → AI 생성 → page 3 이동 ───────────────
+        # 인터뷰 완료 → AI 카피 생성 → page 3
         else:
-            with st.spinner("🧠 AI가 제안서를 생성하고 있습니다…"):
-                ans = st.session_state.interview_answers
-                product  = ans.get("product_name",  "OpenerUltra")
-                value    = ans.get("value_prop",     "영업 리서치를 90초로 압축합니다")
-                company  = ans.get("buyer_company",  "Acme Corp")
-                bname    = ans.get("buyer_name",     "담당자")
-                brole    = ans.get("buyer_role",     "VP Sales")
-                pain     = ans.get("pain_point",     "수작업 리서치 과부하")
+            with st.spinner("🧠 AI가 맞춤 제안서를 생성하고 있습니다…"):
+                a        = st.session_state.interview_answers
+                product  = a.get("product_name",  "OpenerUltra")
+                value    = a.get("value_prop",     "영업 리서치를 90초로 압축합니다")
+                company  = a.get("buyer_company",  "Acme Corp")
+                bname    = a.get("buyer_name",     "담당자")
+                brole    = a.get("buyer_role",     "VP Sales")
+                pain     = a.get("pain_point",     "수작업 리서치 과부하")
 
-                # Claude API로 카피 생성 (API 키 있을 때) 또는 템플릿
+                # Claude API 카피 생성 (ANTHROPIC_API_KEY 있을 때)
+                copy = {}
                 try:
                     import anthropic
                     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
                     if api_key:
                         client = anthropic.Anthropic(api_key=api_key)
-                        prompt = f"""
-당신은 B2B 세일즈 카피라이터입니다. 아래 정보로 제안서 카피를 JSON으로 작성해주세요.
-
-제품: {product}
-핵심가치: {value}
-타겟기업: {company}
-담당자: {bname} ({brole})
-페인포인트: {pain}
-
-아래 JSON 형식으로만 응답하세요:
-{{
-  "headline": "Why {company} Needs {product} Now (30자 이내)",
-  "exec_body": "Executive Summary 2-3문장",
-  "roi_summary": "ROI 요약 1-2문장",
-  "email_subject": "이메일 제목 (50자 이내)",
-  "email_body": "개인화 이메일 본문 (3-4문장)"
-}}
-"""
                         msg = client.messages.create(
-                            model="claude-sonnet-4-20250514",
-                            max_tokens=800,
-                            messages=[{"role": "user", "content": prompt}],
+                            model="claude-sonnet-4-20250514", max_tokens=600,
+                            messages=[{"role": "user", "content":
+                                f"B2B 세일즈 카피라이터. 아래 정보로 JSON 작성. 다른 말 없이 JSON만.\n"
+                                f"제품:{product} 가치:{value} 기업:{company} 담당:{bname}({brole}) 페인:{pain}\n"
+                                f'{{"headline":"(30자 이내)","exec_body":"(2문장)","roi_summary":"(1문장)",'
+                                f'"email_subject":"(50자)","email_body":"(영문 3문장 개인화)"}}'
+                            }],
                         )
-                        raw = msg.content[0].text
                         import re
-                        m = re.search(r'\{.*\}', raw, re.DOTALL)
-                        copy = json.loads(m.group()) if m else {}
-                    else:
-                        copy = {}
+                        m = re.search(r'\{.*\}', msg.content[0].text, re.DOTALL)
+                        if m: copy = json.loads(m.group())
                 except Exception:
-                    copy = {}
+                    pass
 
-                # 폴백 템플릿
                 st.session_state.ai_copy = {
-                    "product":       product,
-                    "company":       company,
-                    "buyer_name":    bname,
-                    "buyer_role":    brole,
-                    "headline":      copy.get("headline",
-                        f"Why {company} Needs {product} Now"),
-                    "exec_body":     copy.get("exec_body",
-                        f"Based on deep research into {company}'s challenges with {pain}, "
-                        f"we identified a critical gap. {product} — {value} — "
-                        f"closes that gap in 90 seconds."),
-                    "roi_summary":   copy.get("roi_summary",
-                        f"For a team of 20 reps, {product} delivers ~$180K in annual "
-                        f"research savings plus $2.4M+ in pipeline acceleration."),
-                    "email_subject": copy.get("email_subject",
-                        f"{company}'s {pain[:30]} → solved in 90s?"),
-                    "email_body":    copy.get("email_body",
+                    "product":        product, "company": company,
+                    "buyer_name":     bname,   "buyer_role": brole,
+                    "headline":       copy.get("headline",      f"Why {company} Needs {product} Now"),
+                    "exec_body":      copy.get("exec_body",
+                        f"Based on deep research into {company}'s challenge with {pain}, "
+                        f"{product} — {value} — closes the gap in 90 seconds."),
+                    "roi_summary":    copy.get("roi_summary",
+                        f"For a team of 20 reps, {product} delivers ~$180K in annual savings "
+                        f"plus $2.4M+ pipeline acceleration."),
+                    "email_subject":  copy.get("email_subject", f"{company}'s {pain[:28]}… solved in 90s?"),
+                    "email_body":     copy.get("email_body",
                         f"Hi {bname},\n\nI noticed {company} is dealing with {pain}. "
-                        f"{product} {value} — teams like yours see +28% win rate in 90 days.\n\n"
+                        f"{product} {value}. Teams like yours see +28% win rate in 90 days.\n\n"
                         f"Worth a 15-min call this week?"),
                 }
-                time.sleep(1.2)  # 생성 느낌 연출
+                time.sleep(0.8)
 
             st.session_state.page = "editor"
             st.rerun()
@@ -395,86 +281,75 @@ if _ST:
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif st.session_state.page == "editor":
 
-        # AI 생성 카피 불러오기
-        ac       = st.session_state.get("ai_copy", {})
-        product  = ac.get("product",    "OpenerUltra")
-        company  = ac.get("company",    "Acme Corp")
-        bname    = ac.get("buyer_name", "담당자")
-        brole    = ac.get("buyer_role", "VP Sales")
+        ac      = st.session_state.get("ai_copy", {})
+        product = ac.get("product",    "OpenerUltra")
+        company = ac.get("company",    "Acme Corp")
+        bname   = ac.get("buyer_name", "담당자")
+        brole   = ac.get("buyer_role", "VP Sales")
 
         # ── 사이드바 ─────────────────────────────────────────────
         with st.sidebar:
             st.markdown("""
-            <div style='background:linear-gradient(135deg,#0f2044,#1a3060);
-                 padding:14px 16px;border-radius:10px;margin-bottom:16px'>
-              <div style='font-size:16px;font-weight:800;color:#fff'>
-                opener<span style='color:#c9a84c'>ultra</span></div>
-              <div style='font-size:10px;color:rgba(255,255,255,.4);margin-top:2px'>
-                AI 제안서 · 편집 모드</div>
-            </div>
-            """, unsafe_allow_html=True)
-
+<style>
+[data-testid="stSidebar"] > div:first-child { background: #0f2044 !important; }
+.css-1d391kg, [data-testid="stSidebarContent"] { background: #0f2044 !important; }
+</style>
+""", unsafe_allow_html=True)
+            st.markdown(
+                '<div style="background:rgba(255,255,255,.06);padding:12px 14px;'
+                'border-radius:10px;margin-bottom:14px">'
+                '<div style="font-size:15px;font-weight:800;color:#fff">'
+                'opener<span style="color:#c9a84c">ultra</span></div>'
+                '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">'
+                'AI 제안서 · 편집 모드</div></div>',
+                unsafe_allow_html=True,
+            )
             st.markdown("### 🎯 바이어 정보")
             company = st.text_input("기업명",  company)
             bname   = st.text_input("담당자",  bname)
             brole   = st.text_input("직책",    brole)
             product = st.text_input("제품명",  product)
-
             st.divider()
             st.markdown("### 📨 발송 설정")
-            sg_key   = st.text_input("SendGrid API Key", type="password",
-                                      placeholder="SG.xxxx…")
+            sg_key   = st.text_input("SendGrid API Key", type="password", placeholder="SG.xxxx…")
             to_email = st.text_input("수신 이메일", placeholder="buyer@company.com")
-
             st.divider()
-            if st.button("← 처음으로 돌아가기", use_container_width=True):
+            if st.button("← 처음으로", use_container_width=True):
                 st.session_state.page = "landing"
                 st.rerun()
 
         # ── 헤더 ─────────────────────────────────────────────────
-        st.markdown(f"""
-        <div style='background:linear-gradient(135deg,#0f2044,#1e3a70);
-             padding:16px 24px;border-radius:14px;margin-bottom:20px;
-             display:flex;justify-content:space-between;align-items:center;
-             box-shadow:0 4px 20px rgba(15,32,68,.2)'>
-          <div>
-            <span style='font-size:18px;font-weight:800;color:#fff'>
-              opener<span style='color:#c9a84c'>ultra</span>
-            </span>
-            <span style='font-size:12px;color:rgba(255,255,255,.4);margin-left:12px'>
-              {company} 제안서 편집 중
-            </span>
-          </div>
-          <span style='font-size:9px;background:rgba(201,168,76,.15);color:#c9a84c;
-               padding:3px 10px;border-radius:100px;border:1px solid rgba(201,168,76,.25);
-               font-weight:700;letter-spacing:.8px'>3/3단계 · 편집 & 발송</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background:linear-gradient(135deg,#0f2044,#1e3a70);'
+            f'padding:14px 22px;border-radius:14px;margin-bottom:18px;'
+            f'display:flex;justify-content:space-between;align-items:center;">'
+            f'<div><span style="font-size:17px;font-weight:800;color:#fff">'
+            f'opener<span style="color:#c9a84c">ultra</span></span>'
+            f'<span style="font-size:12px;color:rgba(255,255,255,.4);margin-left:12px">'
+            f'{company} 제안서 편집 중</span></div>'
+            f'<span style="font-size:9px;background:rgba(201,168,76,.15);color:#c9a84c;'
+            f'padding:3px 10px;border-radius:100px;border:1px solid rgba(201,168,76,.25);'
+            f'font-weight:700;letter-spacing:.8px">3/3단계 · 편집 & 발송</span></div>',
+            unsafe_allow_html=True,
+        )
 
-        # AI 생성 완료 알림
-        st.success(f"🤖 AI가 **{company}** 맞춤 제안서 초안을 생성했습니다! 아래에서 자유롭게 수정하세요.")
+        st.success(f"🤖 AI가 **{company}** 맞춤 초안을 생성했습니다! 자유롭게 수정 후 PDF를 만드세요.")
 
-        # ── 탭 ───────────────────────────────────────────────────
-        tab_edit, tab_send, tab_audit = st.tabs(
-            ["📝 카피 편집 & PDF", "🚀 이메일 발송", "📁 구조 검증"])
+        tab_edit, tab_send, tab_check = st.tabs(["📝 카피 편집 & PDF", "🚀 이메일 발송", "📁 파일 확인"])
 
-        # ┌─────────────────────────────────────────────────────────
-        # │ TAB 1: 편집 & PDF
-        # └─────────────────────────────────────────────────────────
+        # ── TAB 1: 편집 & PDF ─────────────────────────────────────
         with tab_edit:
-            col_l, col_r = st.columns(2, gap="medium")
-
-            with col_l:
+            cl, cr = st.columns(2, gap="medium")
+            with cl:
                 st.subheader("✏️ 카피 편집")
-                headline  = st.text_input("헤드라인",     ac.get("headline",  f"Why {company} Needs {product} Now"))
-                exec_body = st.text_area( "Executive Summary", ac.get("exec_body",  ""), height=100)
-                roi_sum   = st.text_area( "ROI 요약",     ac.get("roi_summary",""), height=68)
-                email_subj = st.text_input("이메일 제목", ac.get("email_subject", ""))
-                email_body = st.text_area("이메일 본문",  ac.get("email_body",  ""), height=160)
+                headline   = st.text_input("헤드라인",          ac.get("headline",      f"Why {company} Needs {product} Now"))
+                exec_body  = st.text_area( "Executive Summary", ac.get("exec_body",     ""), height=100)
+                roi_sum    = st.text_area( "ROI 요약",          ac.get("roi_summary",   ""), height=68)
+                email_subj = st.text_input("이메일 제목",        ac.get("email_subject", ""))
+                email_body = st.text_area( "이메일 본문",        ac.get("email_body",    ""), height=160)
 
-            with col_r:
+            with cr:
                 st.subheader("🖨 PDF 생성 & 검수")
-
                 if st.button("✦ PDF 생성 + 9단계 검수", type="primary", use_container_width=True):
                     from engine.agents.designer import (
                         DesignerAgent, DesignPayload,
@@ -490,18 +365,18 @@ if _ST:
                     chart = viz.generate(ChartType.RADAR, company, BuyerFocus.SALES_IMPACT, product)
                     prog.progress(35, text="PDF 렌더링 중…")
 
-                    p = DesignPayload(
+                    payload = DesignPayload(
                         product_name=product, buyer_company=company,
-                        buyer_name=bname,     buyer_role=brole,
+                        buyer_name=bname, buyer_role=brole,
                         exec_headline=headline, exec_body=exec_body,
-                        roi_summary=roi_sum,  chart_paths=[chart],
+                        roi_summary=roi_sum, chart_paths=[chart],
                         pain_points=DEFAULT_PAIN[:3], features=DEFAULT_FEATURES[:3],
                         roi_rows=DEFAULT_ROI, roadmap=DEFAULT_ROADMAP,
                         references=_default_refs("SaaS"),
                         kpis=[("73%","Research Saved",""),
                               ("+28%","Win Rate",""), ("90s","Brief","")],
                     )
-                    pdf_path = DesignerAgent("temp").generate(p)
+                    pdf_path = DesignerAgent("temp").generate(payload)
                     prog.progress(75, text="Proofreader 검수 중…")
 
                     pr    = ProofreaderAgent()
@@ -515,68 +390,57 @@ if _ST:
                     st.success(f"✅ PDF 생성 완료 ({os.path.getsize(pdf_path)//1024}KB)")
 
                 if "proof" in st.session_state:
-                    p = st.session_state["proof"]
+                    p  = st.session_state["proof"]
                     sc = p["score"]
-                    emoji = "🟢" if sc >= .9 else "🟡" if sc >= .7 else "🔴"
                     m1, m2, m3 = st.columns(3)
-                    m1.metric("검수 점수", f"{sc:.0%}", emoji)
-                    m2.metric("이슈 수",   p["issues"], "건")
-                    m3.metric("Error",     p["errors"], "건")
+                    m1.metric("검수 점수", f"{sc:.0%}", "🟢" if sc>=.9 else "🟡" if sc>=.7 else "🔴")
+                    m2.metric("이슈",      p["issues"], "건")
+                    m3.metric("Error",    p["errors"], "건")
                     if p.get("top_issue"):
-                        st.caption(f"⚠ 주요 이슈: {p['top_issue']}")
+                        st.caption(f"⚠ {p['top_issue']}")
 
                 if "pdf_path" in st.session_state:
                     with open(st.session_state["pdf_path"], "rb") as f:
-                        pdf_bytes = f.read()
-                    st.download_button(
-                        "⬇ PDF 다운로드", data=pdf_bytes,
-                        file_name=f"{company}_proposal.pdf",
-                        mime="application/pdf", use_container_width=True,
-                    )
+                        st.download_button("⬇ PDF 다운로드", data=f.read(),
+                            file_name=f"{company}_proposal.pdf",
+                            mime="application/pdf", use_container_width=True)
 
-        # ┌─────────────────────────────────────────────────────────
-        # │ TAB 2: 발송
-        # └─────────────────────────────────────────────────────────
+        # ── TAB 2: 발송 ───────────────────────────────────────────
         with tab_send:
             st.subheader("🚀 제안서 이메일 발송")
-
             if "pdf_path" not in st.session_state:
-                st.info("먼저 '카피 편집 & PDF' 탭에서 PDF를 만들어 주세요.")
+                st.info("먼저 'PDF 생성' 탭에서 PDF를 만들어 주세요.")
             else:
                 kb = os.path.getsize(st.session_state["pdf_path"]) // 1024
-                st.success(f"📎 첨부 준비 완료 — {company}_proposal.pdf ({kb}KB)")
+                st.success(f"📎 {company}_proposal.pdf ({kb}KB) 첨부 준비 완료")
 
-                left, right = st.columns(2, gap="medium")
-                with left:
+                l, r = st.columns(2, gap="medium")
+                with l:
                     st.markdown("**이메일 미리보기**")
                     st.code(st.session_state.get("email_subj", ""), language=None)
-                    st.text_area("본문", st.session_state.get("email_body", ""),
-                                  height=190, disabled=True)
+                    st.text_area("본문", st.session_state.get("email_body", ""), height=190, disabled=True)
 
-                with right:
+                with r:
                     st.markdown("**발송 체크리스트**")
                     checks = [
                         ("PDF 생성",         True),
                         ("이메일 본문",       bool(st.session_state.get("email_body"))),
                         ("이메일 제목",       bool(st.session_state.get("email_subj"))),
-                        ("SendGrid API Key", bool(sg_key and sg_key.startswith("SG."))),
+                        ("SendGrid Key",    bool(sg_key and sg_key.startswith("SG."))),
                         ("수신 이메일",       bool(to_email and "@" in to_email)),
                         ("Proofreader 완료", "proof" in st.session_state),
                     ]
                     all_ok = all(v for _, v in checks)
-                    for label, ok in checks:
-                        st.markdown(f"{'✅' if ok else '❌'} {label}")
-
+                    for lbl, ok in checks:
+                        st.markdown(f"{'✅' if ok else '❌'} {lbl}")
                     st.divider()
-                    send_clicked = st.button(
-                        "📨 지금 발송하기", type="primary",
-                        use_container_width=True, disabled=not all_ok,
-                    )
+                    send_btn = st.button("📨 지금 발송하기", type="primary",
+                                         use_container_width=True, disabled=not all_ok)
                     if not all_ok:
-                        st.caption("모든 항목이 ✅ 되어야 발송 가능합니다.")
+                        st.caption("모든 항목 ✅ 후 발송 가능")
 
-                if send_clicked and all_ok:
-                    with st.spinner("SendGrid로 발송 중…"):
+                if send_btn and all_ok:
+                    with st.spinner("발송 중…"):
                         try:
                             import sendgrid as sg_lib
                             from sendgrid.helpers.mail import (
@@ -589,50 +453,44 @@ if _ST:
                                 from_email="noreply@openerultra.ai",
                                 to_emails=to_email,
                                 subject=st.session_state.get("email_subj", ""),
-                                html_content=st.session_state.get(
-                                    "email_body", "").replace("\n", "<br>"),
+                                html_content=st.session_state.get("email_body", "").replace("\n","<br>"),
                             )
-                            att = Attachment(
+                            msg.attachment = Attachment(
                                 FileContent(base64.b64encode(pdf_data).decode()),
                                 FileName(f"{company}_proposal.pdf"),
                                 FileType("application/pdf"),
                                 Disposition("attachment"),
                             )
-                            msg.attachment = att
                             sg_lib.SendGridAPIClient(api_key=sg_key).send(msg)
                             send_ok = True
                         except Exception as e:
-                            send_ok = False
-                            send_err = str(e)[:200]
+                            send_ok = False; send_err = str(e)[:200]
 
                     if send_ok:
                         st.balloons()
                         st.success(f"🎉 발송 완료! → {to_email}")
-                        st.markdown("""
-                        <div style='background:linear-gradient(135deg,#0f2044,#1e3a70);
-                             padding:24px;border-radius:14px;text-align:center;
-                             margin-top:12px;border:1px solid rgba(201,168,76,.2)'>
-                          <div style='font-size:48px'>🎊</div>
-                          <div style='color:#c9a84c;font-size:20px;font-weight:800;margin-top:10px'>
-                            제안서 발송 완료!</div>
-                          <div style='color:rgba(255,255,255,.55);font-size:13px;margin-top:6px'>
-                            opener ultra 전 10단계 파이프라인 완료 🚀</div>
-                        </div>""", unsafe_allow_html=True)
+                        st.markdown(
+                            '<div style="background:linear-gradient(135deg,#0f2044,#1e3a70);'
+                            'padding:24px;border-radius:14px;text-align:center;'
+                            'border:1px solid rgba(201,168,76,.2);margin-top:12px">'
+                            '<div style="font-size:48px">🎊</div>'
+                            '<div style="color:#c9a84c;font-size:20px;font-weight:800;margin-top:10px">'
+                            '제안서 발송 완료!</div>'
+                            '<div style="color:rgba(255,255,255,.5);font-size:13px;margin-top:6px">'
+                            'opener ultra 전 10단계 파이프라인 완료 🚀</div></div>',
+                            unsafe_allow_html=True,
+                        )
                     else:
-                        if "unauthorized" in send_err.lower():
-                            st.error("⚠ SendGrid 인증 실패 — API 키를 확인해 주세요.")
-                        else:
-                            st.error(f"발송 실패: {send_err}")
+                        st.error(f"발송 실패: {'인증 오류 — API 키 확인' if 'unauthorized' in send_err.lower() else send_err}")
 
-        # ┌─────────────────────────────────────────────────────────
-        # │ TAB 3: 구조 검증
-        # └─────────────────────────────────────────────────────────
-        with tab_audit:
-            st.subheader("📁 프로젝트 구조 검증")
-            manifest = [
+        # ── TAB 3: 파일 확인 ──────────────────────────────────────
+        with tab_check:
+            st.subheader("📁 프로젝트 파일 상태")
+            files = [
                 ("app.py",                       "통합 서버"),
                 ("engine/__init__.py",           "엔진 패키지"),
                 ("engine/core.py",               "StateManager · EventBus"),
+                ("engine/agents/__init__.py",    "agents 패키지"),
                 ("engine/agents/designer.py",    "DesignerAgent"),
                 ("engine/agents/visualizer.py",  "VisualizerAgent"),
                 ("engine/agents/proofreader.py", "ProofreaderAgent"),
@@ -640,18 +498,15 @@ if _ST:
                 ("engine/agents/strategist.py",  "StrategistAgent"),
                 ("engine/agents/discovery.py",   "DiscoveryAgent"),
             ]
-            ok_cnt = sum(1 for p, _ in manifest if os.path.exists(p))
-            st.metric("파일 상태", f"{ok_cnt}/{len(manifest)}",
-                      "전체 완료 ✅" if ok_cnt == len(manifest) else "누락 있음")
-            for fpath, desc in manifest:
-                c1, c2, c3 = st.columns([3, 4, 1])
-                c1.code(fpath, language=None)
-                c2.caption(desc)
-                c3.write("✅" if os.path.exists(fpath) else "❌")
-
+            ok = sum(1 for p, _ in files if os.path.exists(p))
+            st.metric("파일 상태", f"{ok}/{len(files)}", "전체 ✅" if ok==len(files) else "누락 있음")
+            for fp, desc in files:
+                a, b, c = st.columns([3,4,1])
+                a.code(fp, language=None); b.caption(desc); c.write("✅" if os.path.exists(fp) else "❌")
             st.divider()
-            st.success("🏁 opener ultra · 전 10단계 파이프라인 시연 준비 완료")
-            st.code("streamlit run app.py   # :8501\npython app.py          # Flask :5000", language="bash")
+            st.success("🏁 opener ultra · 전 10단계 파이프라인 완료")
+            st.code("streamlit run app.py\npython app.py  # Flask :5000", language="bash")
+
 
 
 ###################################################################
