@@ -238,7 +238,7 @@ footer                          { display: none !important; }
   <p style="font-size:18px;color:#6b7280;font-weight:400;
       line-height:1.6;max-width:480px;margin:0 auto">
     타겟 기업 URL 하나로<br>
-    <strong style="color:#111827">글로벌 수준의 B2B 제안서</strong>를 90초 만에
+    <strong style="color:#111827">글로벌 수준의 B2B 제안서</strong>를 10분 만에
   </p>
 </div>
 """, unsafe_allow_html=True)
@@ -258,14 +258,6 @@ footer                          { display: none !important; }
                 placeholder="https://kakao.com",
                 label_visibility="collapsed",
             )
-            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-            col_a, col_b = st.columns(2)
-            with col_a:
-                product = st.text_input("내 제품/서비스", placeholder="예: 세일즈 AI 플랫폼")
-            with col_b:
-                value = st.text_input("핵심 가치", placeholder="예: 리서치 시간 90% 절감")
-
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
             COUNTRY_OPTIONS = {
@@ -294,7 +286,7 @@ footer                          { display: none !important; }
         st.markdown("""
 <div style="display:flex;justify-content:center;gap:32px;margin-top:32px">
   <div style="text-align:center">
-    <div style="font-size:22px;font-weight:800;color:#111827">90초</div>
+    <div style="font-size:22px;font-weight:800;color:#111827">10분</div>
     <div style="font-size:12px;color:#9ca3af;margin-top:2px">제안서 완성</div>
   </div>
   <div style="width:1px;background:#f0f0f0"></div>
@@ -304,7 +296,7 @@ footer                          { display: none !important; }
   </div>
   <div style="width:1px;background:#f0f0f0"></div>
   <div style="text-align:center">
-    <div style="font-size:22px;font-weight:800;color:#111827">+28%</div>
+    <div style="font-size:22px;font-weight:800;color:#111827">+10.2%</div>
     <div style="font-size:12px;color:#9ca3af;margin-top:2px">Win Rate 향상</div>
   </div>
 </div>
@@ -313,13 +305,11 @@ footer                          { display: none !important; }
         if submitted:
             if not url.strip() or not url.strip().startswith("http"):
                 st.error("올바른 URL을 입력해 주세요 (https://로 시작)")
-            elif not product.strip():
-                st.error("제품/서비스 이름을 입력해 주세요")
             else:
                 st.session_state.target_url  = url.strip()
                 st.session_state.extra_info  = {
-                    "product":       product.strip(),
-                    "value":         value.strip(),
+                    "product":       "",
+                    "value":         "",
                     "country":       COUNTRY_OPTIONS[country_label],
                     "country_label": country_label,
                 }
